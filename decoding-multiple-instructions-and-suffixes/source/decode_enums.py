@@ -9,6 +9,8 @@ class Opcode(Enum):
     MOV_IMMEDIATE2REG_10 = 0b101110
     MOV_IMMEDIATE2REG_11 = 0b101111
 
+    MOV_IMMEDIATE2REGORMEMORY = 0b110001
+
     @staticmethod
     def is_mov_immediate2reg(opcode) -> bool:
         return (opcode & 0b111100) == Opcode.MOV_IMMEDIATE2REG_00.value
