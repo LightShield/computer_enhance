@@ -1,0 +1,11 @@
+MOV AX, [BX+DI + 219]
+MOV [SI + 65236], CX
+MOV DX, [BX + 224]
+MOV [BP+DI] byte, 7
+MOV [DI + 901] word, 347
+MOV BP, [5]
+MOV BX, [3458]
+MOV [2555], AX
+MOV [16], AX
+MOV AX, [2554]
+MOV AX, [15]

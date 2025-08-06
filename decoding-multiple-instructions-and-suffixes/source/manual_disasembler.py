@@ -77,6 +77,24 @@ def return_decoded_mov_reg2reg_direction(decoded_reg, decoded_rm, direction):
         return f"MOV {decoded_rm}, {decoded_reg.name}"
     return f"MOV {decoded_reg.name}, {decoded_rm}"
 
+def decode_mov_mem_and_accumulator(binary_stream, instruction_byte_0):
+    direction = extract_bits(instruction_byte_0, 1, 1)  
+    width = extract_bits(instruction_byte_0, 0, 0) 
+
+    address_low = binary_stream.read_next_byte()
+    address_high = ""
+    address_value = address_low
+    if width == Width.WORD.value:
+        address_high = binary_stream.read_next_byte()
+        address_value = (address_high << 8) | address_low
+     
+    address_value = f"[{address_value}]" 
+    register = get_registers(reg=000, width=Width(width)) # hard codewd for accumulator register (AL or AX)
+    print(f"Raw instruction bits: {instruction_byte_0:08b} {address_low:08b} {address_high if address_high else ''}")
+    if direction == Direction.SOURCE_IN_REG_FIELD.value:
+        return f"MOV {address_value}, {register.name}"
+    return f"MOV {register.name}, {address_value}"
+
 def decode_move_immediate2regormemory(binary_stream, instruction_byte_0):
     instruction_byte_1 = binary_stream.read_next_byte()
     direction = extract_bits(instruction_byte_0, 1, 1)  
@@ -141,6 +159,8 @@ def decode_instruction(binary_stream, instruction_byte_0):
             return decode_mov_reg2reg(binary_stream, instruction_byte_0)
         case Opcode.MOV_IMMEDIATE2REGORMEMORY.value:
             return decode_move_immediate2regormemory(binary_stream, instruction_byte_0)
+        case Opcode.MOV_MEM_AND_ACCUMULATOR.value:
+            return decode_mov_mem_and_accumulator(binary_stream, instruction_byte_0)
         case _:
             raise RuntimeError(f"Unhandled opcode: {opcode:06b}")   
    

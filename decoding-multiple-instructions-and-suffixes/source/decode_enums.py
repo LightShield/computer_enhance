@@ -3,6 +3,8 @@ from enum import Enum
 class Opcode(Enum):
     MOV_REG2REG = 0b100010
 
+    MOV_MEM_AND_ACCUMULATOR = 0b101000
+
     # MOV_IMMEDIATE2REG = 0b1011xx  # x can be 0 or 1, depending on the width of the immediate value
     MOV_IMMEDIATE2REG_00 = 0b101100
     MOV_IMMEDIATE2REG_01 = 0b101101
