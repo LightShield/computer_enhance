@@ -14,6 +14,9 @@ class Register16:
 
     def __repr__(self):
         return f"0x{self._value:04X} ({self._value})"
+    
+    def __format__(self, format_spec):
+        return format(self.value, format_spec)
 
 
 class Register16WithLowHigh(Register16):

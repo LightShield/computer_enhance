@@ -5,7 +5,6 @@ class Simulator:
     def __init__(self):
         self.regs = Registers()
         self.log = Logger.get()  # singleton logger
-        self.log.set_level("INFO")
 
     def _run_simulation_step(self, command_to_run: str):
         command_parts = command_to_run.split()
@@ -18,7 +17,7 @@ class Simulator:
 
             # Handle register to register move
             if hasattr(self.regs, src):
-                setattr(self.regs, dest, getattr(self.regs, src).value)
+                setattr(self.regs, dest, getattr(self.regs, src))
             # Handle immediate to register move
             else:
                 try:
@@ -29,7 +28,7 @@ class Simulator:
                 setattr(self.regs, dest, immediate_value)
 
             post_command_value = getattr(self.regs, dest)
-            self.log.info(f"Executed:\"{command_to_run}\" |||| {dest} 0x{pre_command_value.value:04X} -> 0x{post_command_value:04X}")
+            self.log.info(f"Executed:\"{command_to_run}\" |||| {dest} 0x{pre_command_value:04X} -> 0x{post_command_value:04X}")
         else:
             self.log.error(f"Unsupported command: {command_to_run}")
             raise ValueError(f"Unsupported command: {command_to_run}")
@@ -65,6 +64,8 @@ class Simulator:
 if __name__ == "__main__":
     import sys
     simulator = Simulator()
+    simulator.log.set_level("Info")
+
     if len(sys.argv) < 2:
         Logger.get().error("Please provide a file path with commands to simulate.")
         sys.exit(1)
