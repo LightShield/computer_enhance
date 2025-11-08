@@ -16,6 +16,8 @@ class Register16:
         return f"0x{self._value:04X} ({self._value})"
     
     def __format__(self, format_spec):
+        if format_spec == "":
+            return repr(self)
         return format(self.value, format_spec)
 
 
@@ -38,6 +40,28 @@ class Register16WithLowHigh(Register16):
 
     def __repr__(self):
         return (f"0x{self._value:04X} ({self._value})")
+    
+class Register8View:
+    """A view of the low or high 8 bits of a 16-bit register."""
+    def __init__(self, parent: 'Register16WithLowHigh', part: str):
+        assert part in ('low', 'high')
+        self._parent = parent
+        self._part = part
+
+    @property
+    def value(self):
+        return getattr(self._parent, self._part)
+
+    @value.setter
+    def value(self, val):
+        setattr(self._parent, self._part, val)
+
+    def __int__(self):
+        return self.value
+
+    def __repr__(self):
+        v = self.value
+        return f"0x{v:02X} ({v})"
 
 
 def add_aliases(cls, low_alias, high_alias):
@@ -120,23 +144,24 @@ def add_register_aliases_to_wrapper(wrapper_cls):
         'd': 'dx',
     }
     for prefix, reg_name in prefix_to_reg.items():
-        for suffix in ['l', 'h']:
+        for suffix, part in [('l', 'low'), ('h', 'high')]:
             alias = prefix + suffix
 
-            def make_getter(alias=alias, reg_name=reg_name):
+            # getter returns a Register8View object (the live 8-bit view)
+            def make_getter(reg_name=reg_name, part=part):
                 def getter(self):
                     reg = getattr(self, reg_name)
-                    return getattr(reg, alias)
+                    return Register8View(reg, part)
                 return getter
 
-            def make_setter(alias=alias, reg_name=reg_name):
+            # setter writes directly through the parent register
+            def make_setter(reg_name=reg_name, part=part):
                 def setter(self, value):
                     reg = getattr(self, reg_name)
-                    setattr(reg, alias, value)
+                    setattr(reg, part, value)
                 return setter
-            
-            setattr(wrapper_cls, alias, property(make_getter(), make_setter()))
 
+            setattr(wrapper_cls, alias, property(make_getter(), make_setter()))
 
 add_register_aliases_to_wrapper(Registers)
 

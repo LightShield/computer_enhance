@@ -11,24 +11,19 @@ class Simulator:
         if command_parts[0] == "mov":
             dest = command_parts[1].rstrip(',')
             src = command_parts[2]
-            pre_command_value = getattr(self.regs, dest)
-            
-            self.log.debug(f'dest: {dest}, src: {src}')
 
-            # Handle register to register move
+            dest_reg = getattr(self.regs, dest)
+            pre_command_value = dest_reg.value
+
             if hasattr(self.regs, src):
-                setattr(self.regs, dest, getattr(self.regs, src))
-            # Handle immediate to register move
+                src_reg = getattr(self.regs, src)
+                dest_reg.value = src_reg.value  # copy value, not object
             else:
-                try:
-                    immediate_value = int(src, 16)
-                except ValueError:
-                    self.log.error(f"Invalid immediate value: {src}")
-                    raise
-                setattr(self.regs, dest, immediate_value)
+                immediate_value = int(src, 16)
+                dest_reg.value = immediate_value  # assign immediate value
 
-            post_command_value = getattr(self.regs, dest)
-            self.log.info(f"Executed:\"{command_to_run}\" |||| {dest} 0x{pre_command_value:04X} -> 0x{post_command_value:04X}")
+            post_command_value = dest_reg.value
+            self.log.info(f'Executed:"{command_to_run}" |||| {dest} 0x{pre_command_value:04X} -> 0x{post_command_value:04X}')
         else:
             self.log.error(f"Unsupported command: {command_to_run}")
             raise ValueError(f"Unsupported command: {command_to_run}")
