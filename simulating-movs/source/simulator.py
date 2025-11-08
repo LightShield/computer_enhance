@@ -19,7 +19,8 @@ class Simulator:
                 src_reg = getattr(self.regs, src)
                 dest_reg.value = src_reg.value  # copy value, not object
             else:
-                immediate_value = int(src, 16)
+                immediate_base = 16 if src.startswith("0x") else 10
+                immediate_value = int(src, immediate_base)
                 dest_reg.value = immediate_value  # assign immediate value
 
             post_command_value = dest_reg.value
