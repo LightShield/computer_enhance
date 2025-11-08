@@ -70,33 +70,85 @@ for reg in ['sp', 'bp', 'si', 'di', 'es', 'ss', 'ds']:
 
 @dataclass
 class Registers:
-    ax: 'AX' = field(default_factory=lambda: AX())
-    bx: 'BX' = field(default_factory=lambda: BX())
-    cx: 'CX' = field(default_factory=lambda: CX())
-    dx: 'DX' = field(default_factory=lambda: DX())
+    _ax: 'AX' = field(default_factory=lambda: AX())
+    _bx: 'BX' = field(default_factory=lambda: BX())
+    _cx: 'CX' = field(default_factory=lambda: CX())
+    _dx: 'DX' = field(default_factory=lambda: DX())
 
-    sp: 'SP' = field(default_factory=lambda: SP())
-    bp: 'BP' = field(default_factory=lambda: BP())
-    si: 'SI' = field(default_factory=lambda: SI())
-    di: 'DI' = field(default_factory=lambda: DI())
+    _sp: 'SP' = field(default_factory=lambda: SP())
+    _bp: 'BP' = field(default_factory=lambda: BP())
+    _si: 'SI' = field(default_factory=lambda: SI())
+    _di: 'DI' = field(default_factory=lambda: DI())
 
-    es: 'ES' = field(default_factory=lambda: ES())
-    ss: 'SS' = field(default_factory=lambda: SS())
-    ds: 'DS' = field(default_factory=lambda: DS())
+    _es: 'ES' = field(default_factory=lambda: ES())
+    _ss: 'SS' = field(default_factory=lambda: SS())
+    _ds: 'DS' = field(default_factory=lambda: DS())
 
     def __repr__(self):
         regs = (f"AX={self.ax}\nBX={self.bx}\nCX={self.cx}\nDX={self.dx}\n"
                 f"SP={self.sp}\nBP={self.bp}\nSI={self.si}\nDI={self.di}\n"
                 f"ES={self.es}\nSS={self.ss}\nDS={self.ds}")
         return f"{regs}"
-    
+
+
+def make_reg_property(reg_name: str):
+    private_name = f"_{reg_name}"
+
+    def getter(self):
+        return getattr(self, private_name)
+
+    def setter(self, val):
+        if isinstance(val, Register16):
+            setattr(self, private_name, val)  # allow full replacement
+        else:
+            getattr(self, private_name).value = val  # assign .value for syntactic sugar
+
+    return property(getter, setter)
+
+
+# Add properties for registers with syntactic sugar setter/getter
+for reg_name in ['ax', 'bx', 'cx', 'dx', 'sp', 'bp', 'si', 'di', 'es', 'ss', 'ds']:
+    setattr(Registers, reg_name, make_reg_property(reg_name))
+
+
+# Add alias properties (al, ah, bl, bh, etc.) on the Registers wrapper class
+def add_register_aliases_to_wrapper(wrapper_cls):
+    prefix_to_reg = {
+        'a': 'ax',
+        'b': 'bx',
+        'c': 'cx',
+        'd': 'dx',
+    }
+    for prefix, reg_name in prefix_to_reg.items():
+        for suffix in ['l', 'h']:
+            alias = prefix + suffix
+
+            def make_getter(alias=alias, reg_name=reg_name):
+                def getter(self):
+                    reg = getattr(self, reg_name)
+                    return getattr(reg, alias)
+                return getter
+
+            def make_setter(alias=alias, reg_name=reg_name):
+                def setter(self, value):
+                    reg = getattr(self, reg_name)
+                    setattr(reg, alias, value)
+                return setter
+            
+            setattr(wrapper_cls, alias, property(make_getter(), make_setter()))
+
+
+add_register_aliases_to_wrapper(Registers)
+
+
 if __name__ == "__main__":
     regs = Registers()
     print(regs)
-    regs.ax.value = 0x1234
-    print(f"AX: {regs.ax}, AL: {regs.ax.al}, AH: {regs.ax.ah}")
+    regs.ax = 0x1234
+    print(f"AX: {regs.ax}, AL: {regs.al}, AH: {regs.ah}")  # note use regs.al instead of regs.ax.al
     regs.bx.bl = 0x56
     regs.bx.bh = 0x78
-    print(f"BX: {regs.bx}, BL: {regs.bx.bl}, BH: {regs.bx.bh}")
+    regs.bl = 0x9A     # accessing alias on wrapper
+    print(f"BX: {regs.bx}, BL: {regs.bl}, BH: {regs.bh}")
     print('----')
     print(regs)
