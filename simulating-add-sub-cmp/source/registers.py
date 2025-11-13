@@ -1,8 +1,42 @@
 from dataclasses import dataclass, field
 
-class Register16:
-    def __init__(self, value=0):
-        self._value = value & 0xFFFF  # 16-bit storage
+# -------------------------
+# Shared arithmetic behavior
+# -------------------------
+class RegisterArithmeticMixin:
+    """Mixin for shared arithmetic/comparison behavior of register types."""
+    _bit_mask = 0xFFFF  # subclasses override this
+
+    def _to_int(self, other):
+        if isinstance(other, (Register16, Register8View)):
+            return other.value
+        return int(other)
+
+    def __add__(self, other):
+        return (self.value + self._to_int(other)) & self._bit_mask
+
+    def __sub__(self, other):
+        return (self.value - self._to_int(other)) & self._bit_mask
+
+    def __eq__(self, other):
+        return self.value == self._to_int(other)
+
+    def __int__(self):
+        return self.value
+
+    def __format__(self, fmt):
+        return format(self.value, fmt)
+
+
+# -------------------------
+# Base register classes
+# -------------------------
+class Register16(RegisterArithmeticMixin):
+    _bit_mask = 0xFFFF
+
+    def __init__(self, value=0, name: str | None = None):
+        self._value = value & self._bit_mask
+        self._name = name
 
     @property
     def value(self):
@@ -10,18 +44,16 @@ class Register16:
 
     @value.setter
     def value(self, word):
-        # Allow assigning another register directly
-        if isinstance(word, Register16) or isinstance(word, Register8View):
+        if isinstance(word, (Register16, Register8View)):
             word = word.value
-        self._value = word & 0xFFFF
+        self._value = word & self._bit_mask
 
     def __repr__(self):
         return f"0x{self._value:04X} ({self._value})"
-    
-    def __format__(self, format_spec):
-        if format_spec == "":
-            return repr(self)
-        return format(self.value, format_spec)
+
+    @property
+    def name(self):
+        return self._name
 
 
 class Register16WithLowHigh(Register16):
@@ -41,15 +73,16 @@ class Register16WithLowHigh(Register16):
     def high(self, val):
         self._value = (self._value & 0x00FF) | ((val & 0x00FF) << 8)
 
-    def __repr__(self):
-        return (f"0x{self._value:04X} ({self._value})")
-    
-class Register8View:
+
+class Register8View(RegisterArithmeticMixin):
     """A view of the low or high 8 bits of a 16-bit register."""
-    def __init__(self, parent: 'Register16WithLowHigh', part: str):
+    _bit_mask = 0xFF
+
+    def __init__(self, parent: 'Register16WithLowHigh', part: str, name: str | None = None):
         assert part in ('low', 'high')
         self._parent = parent
         self._part = part
+        self._name = name
 
     @property
     def value(self):
@@ -57,22 +90,24 @@ class Register8View:
 
     @value.setter
     def value(self, val):
-        # Allow assigning another register directly
         if isinstance(val, (Register16, Register8View)):
             val = val.value
         setattr(self._parent, self._part, val)
 
-    def __int__(self):
-        return self.value
-
     def __repr__(self):
         v = self.value
+        if self._name:
+            return f"{self._name}=0x{v:02X} ({v})"
         return f"0x{v:02X} ({v})"
-    
-    def __format__(self, fmt):
-        return format(self.value, fmt)
+
+    @property
+    def name(self):
+        return self._name
 
 
+# -------------------------
+# Dynamic register creation
+# -------------------------
 def add_aliases(cls, low_alias, high_alias):
     setattr(cls, low_alias,
             property(fget=lambda self: self.low,
@@ -82,59 +117,88 @@ def add_aliases(cls, low_alias, high_alias):
                      fset=lambda self, val: setattr(self, 'high', val)))
 
 
-# Dynamically create AX, BX, CX, DX with aliases using loop over 'a'-'d'
+# AX, BX, CX, DX — have low/high
 for ch in ['a', 'b', 'c', 'd']:
     reg_name = f"{ch}x"
     low_alias = f"{ch}l"
     high_alias = f"{ch}h"
-    cls_name = reg_name.upper()  # AX, BX, CX, DX
-
+    cls_name = reg_name.upper()
     reg_cls = type(cls_name, (Register16WithLowHigh,), {})
     globals()[cls_name] = reg_cls
     add_aliases(reg_cls, low_alias, high_alias)
 
-
-# Dynamically create other registers without low/high aliases
+# SP, BP, SI, DI, ES, SS, DS — simple 16-bit registers
 for reg in ['sp', 'bp', 'si', 'di', 'es', 'ss', 'ds']:
     cls_name = reg.upper()
     reg_cls = type(cls_name, (Register16,), {})
     globals()[cls_name] = reg_cls
 
 
-@dataclass
-class Registers:
-    _ax: 'AX' = field(default_factory=lambda: AX())
-    _bx: 'BX' = field(default_factory=lambda: BX())
-    _cx: 'CX' = field(default_factory=lambda: CX())
-    _dx: 'DX' = field(default_factory=lambda: DX())
-
-    _sp: 'SP' = field(default_factory=lambda: SP())
-    _bp: 'BP' = field(default_factory=lambda: BP())
-    _si: 'SI' = field(default_factory=lambda: SI())
-    _di: 'DI' = field(default_factory=lambda: DI())
-
-    _es: 'ES' = field(default_factory=lambda: ES())
-    _ss: 'SS' = field(default_factory=lambda: SS())
-    _ds: 'DS' = field(default_factory=lambda: DS())
+# -------------------------
+# Flags register
+# -------------------------
+class FlagsRegister:
+    def __init__(self):
+        self._carry_flag = False
+        self._parity_flag = False
+        self._auxiliary_carry_flag = False
+        self._zero_flag = False
+        self._sign_flag = False
+        self._trap_flag = False
+        self._interrupt_enable_flag = False
+        self._direction_flag = False
+        self._overflow_flag = False
 
     def __repr__(self):
-        regs = (f"AX={self.ax}\nBX={self.bx}\nCX={self.cx}\nDX={self.dx}\n"
-                f"SP={self.sp}\nBP={self.bp}\nSI={self.si}\nDI={self.di}\n"
-                f"ES={self.es}\nSS={self.ss}\nDS={self.ds}")
-        return f"{regs}"
-    
-    # flags
-    carry_flag : bool = False
-    parity_flag  : bool = False
-    auxiliary_carry_flag  : bool = False
-    zero_flag  : bool = False
-    sign_flag  : bool = False
-    trap_flag  : bool = False
-    interrupt_enable_flag  : bool = False
-    direction_flag  : bool = False
-    overflow_flag  : bool = False
+        return (f"CF={int(self._carry_flag)} PF={int(self._parity_flag)} "
+                f"AF={int(self._auxiliary_carry_flag)} ZF={int(self._zero_flag)} "
+                f"SF={int(self._sign_flag)} TF={int(self._trap_flag)} "
+                f"IF={int(self._interrupt_enable_flag)} DF={int(self._direction_flag)} "
+                f"OF={int(self._overflow_flag)}")
+
+    def print_changed_flags_from_prev_state(self, prev_flags: 'FlagsRegister'):
+        changes = []
+        for name in ["carry", "parity", "auxiliary_carry", "zero", "sign",
+                     "trap", "interrupt_enable", "direction", "overflow"]:
+            field = f"_{name}_flag"
+            if getattr(self, field) != getattr(prev_flags, field):
+                changes.append(f"{field[1:3].upper()}={int(getattr(self, field))}")
+        return " ".join(changes)
 
 
+# -------------------------
+# Register set
+# -------------------------
+@dataclass
+class Registers:
+    _ax: 'AX' = field(default_factory=lambda: AX(name='AX'))
+    _bx: 'BX' = field(default_factory=lambda: BX(name='BX'))
+    _cx: 'CX' = field(default_factory=lambda: CX(name='CX'))
+    _dx: 'DX' = field(default_factory=lambda: DX(name='DX'))
+
+    _sp: 'SP' = field(default_factory=lambda: SP(name='SP'))
+    _bp: 'BP' = field(default_factory=lambda: BP(name='BP'))
+    _si: 'SI' = field(default_factory=lambda: SI(name='SI'))
+    _di: 'DI' = field(default_factory=lambda: DI(name='DI'))
+
+    _es: 'ES' = field(default_factory=lambda: ES(name='ES'))
+    _ss: 'SS' = field(default_factory=lambda: SS(name='SS'))
+    _ds: 'DS' = field(default_factory=lambda: DS(name='DS'))
+
+    _flags: 'FlagsRegister' = field(default_factory=FlagsRegister)
+
+    def __repr__(self):
+        parts = []
+        for name in ['ax', 'bx', 'cx', 'dx', 'sp', 'bp', 'si', 'di', 'es', 'ss', 'ds']:
+            reg_obj = getattr(self, name)
+            reg_name = getattr(reg_obj, 'name', None) or name.upper()
+            parts.append(f"{reg_name}={reg_obj}")
+        return "\n".join(parts)
+
+
+# -------------------------
+# Register properties (syntactic sugar)
+# -------------------------
 def make_reg_property(reg_name: str):
     private_name = f"_{reg_name}"
 
@@ -143,42 +207,32 @@ def make_reg_property(reg_name: str):
 
     def setter(self, val):
         if isinstance(val, Register16):
-            setattr(self, private_name, val)  # allow full replacement
+            setattr(self, private_name, val)
         else:
-            getattr(self, private_name).value = val  # assign .value for syntactic sugar
+            getattr(self, private_name).value = val
 
     return property(getter, setter)
 
 
-# Add properties for registers with syntactic sugar setter/getter
 for reg_name in ['ax', 'bx', 'cx', 'dx', 'sp', 'bp', 'si', 'di', 'es', 'ss', 'ds']:
     setattr(Registers, reg_name, make_reg_property(reg_name))
 
 
-# Add alias properties (al, ah, bl, bh, etc.) on the Registers wrapper class
 def add_register_aliases_to_wrapper(wrapper_cls):
-    prefix_to_reg = {
-        'a': 'ax',
-        'b': 'bx',
-        'c': 'cx',
-        'd': 'dx',
-    }
+    prefix_to_reg = {'a': 'ax', 'b': 'bx', 'c': 'cx', 'd': 'dx'}
     for prefix, reg_name in prefix_to_reg.items():
         for suffix, part in [('l', 'low'), ('h', 'high')]:
             alias = prefix + suffix
 
-            # getter returns a Register8View object (the live 8-bit view)
-            def make_getter(reg_name=reg_name, part=part):
+            def make_getter(reg_name=reg_name, part=part, alias=alias):
                 def getter(self):
-                    reg = getattr(self, reg_name)
-                    return Register8View(reg, part)
+                    # name the 8-bit view using the alias in uppercase (e.g., 'AL')
+                    return Register8View(getattr(self, reg_name), part, name=alias.upper())
                 return getter
 
-            # setter writes directly through the parent register
             def make_setter(reg_name=reg_name, part=part):
                 def setter(self, value):
-                    reg = getattr(self, reg_name)
-                    setattr(reg, part, value)
+                    setattr(getattr(self, reg_name), part, value)
                 return setter
 
             setattr(wrapper_cls, alias, property(make_getter(), make_setter()))
@@ -186,14 +240,14 @@ def add_register_aliases_to_wrapper(wrapper_cls):
 add_register_aliases_to_wrapper(Registers)
 
 
+# -------------------------
+# Example usage
+# -------------------------
 if __name__ == "__main__":
     regs = Registers()
-    print(regs)
     regs.ax = 0x1234
-    print(f"AX: {regs.ax}, AL: {regs.al}, AH: {regs.ah}")  # note use regs.al instead of regs.ax.al
+    print(f"AX: {regs.ax}, AL: {regs.al}, AH: {regs.ah}")
     regs.bx.bl = 0x56
     regs.bx.bh = 0x78
-    regs.bl = 0x9A     # accessing alias on wrapper
+    regs.bl = 0x9A
     print(f"BX: {regs.bx}, BL: {regs.bl}, BH: {regs.bh}")
-    print('----')
-    print(regs)

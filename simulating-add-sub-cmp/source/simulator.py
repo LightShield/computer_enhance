@@ -6,6 +6,24 @@ class Simulator:
         self.regs = Registers()
         self.log = Logger.get()  # singleton logger
 
+    def _get_register_name(self, reg_obj):
+        # Try common name attributes first
+        name = getattr(reg_obj, 'name', None)
+        if name:
+            return name
+        name = getattr(reg_obj, '_name', None)
+        if name:
+            return name
+        # Search Registers fields for the object identity
+        for attr in ['ax','bx','cx','dx','sp','bp','si','di','es','ss','ds']:
+            try:
+                if getattr(self.regs, attr) is reg_obj:
+                    return attr.upper()
+            except Exception:
+                continue
+        # Fallback to class name
+        return reg_obj.__class__.__name__
+
     def run_simulation(self, file_path: str):
         # Helper functions for filtering lines
         def _simulation_ended(line: str) -> bool:
@@ -63,20 +81,41 @@ class Simulator:
         return action_to_apply( dest_reg, immediate_value )
     
     def _handle_mov_command(self, command_parts):
-            def action_to_apply(dest_reg, value):
+            def reg_mov_action(dest_reg, value):
                 pre_command_value = dest_reg.value
                 dest_reg.value = value
-                return  f'{dest_reg} 0x{pre_command_value:04X} -> 0x{value:04X}'
+                reg_name = self._get_register_name(dest_reg)
+                return  f'{reg_name} {dest_reg} 0x{pre_command_value:04X} -> 0x{value:04X}'
             
-            return self._handle_regs_command(command_parts, action_to_apply)
+            return self._handle_regs_command(command_parts, reg_mov_action)
 
+    def _update_substraction_flags(self, subtraction_result):
+        prev_flags_state = self.regs._flags
+        if (subtraction_result < 0):
+            self.regs._flags.sign_flag = True
+        elif (subtraction_result == 0):
+            self.regs._flags.zero_flag = True
+        
+        return  self.regs._flags.print_changed_flags_from_prev_state(prev_flags_state)
+    
     def _handle_add_command(self, command_parts):
         pass
     def _handle_sub_command(self, command_parts):
-        pass
+        def reg_sub_action(dest_reg, value):
+            pre_command_value = dest_reg.value
+            subtraction_result = dest_reg - value
+            flags_update = self._update_substraction_flags(subtraction_result)
+            dest_reg -= value
+            reg_name = self._get_register_name(dest_reg)
+            return  f'{reg_name} 0x{pre_command_value:04X} -> 0x{value:04X} {flags_update}'
+        return self._handle_regs_command(command_parts, reg_sub_action)
         
     def _handle_cmp_command(self, command_parts):
-        pass
+        def reg_cmp_action(dest_reg, value):
+            subtraction_result = dest_reg - value
+            return self._update_substraction_flags(subtraction_result)
+        
+        return self._handle_regs_command(command_parts, reg_cmp_action)
 
 if __name__ == "__main__":
     import sys
