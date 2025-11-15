@@ -1,43 +1,61 @@
 #include "logger.h"
+#include "simulator.h"
+#include <stdexcept>
 
 int main() {
-    // Initialize logger with Debug level for verbose output
+    // Initialize logger with Info level for cleaner output
     Logger::Config config;
-    config.level = LogLevel::Debug;
+    config.level = LogLevel::Info;
     Logger::Init(config);
 
-    // Get logger instance (zero overhead access)
-    auto& logger = Logger::Get();
+    LOGGER.Info("=== Computer Enhance - 8086 Simulator ===");
+    LOGGER.Info("Simulator with integrated zero-overhead logger");
 
-    // Sanity check - test all log levels
-    logger.Info("=== Computer Enhance - Logger Integration Test ===");
-    logger.Debug("Logger initialized successfully with Debug level");
+    try {
+        // Create simulator instance
+        Simulator sim;
 
-    logger.Info("Project: computer_enhance/simulating-add-sub-cmp/cpp_implementation");
-    logger.Debug("Using zero-overhead logger from shared/logger_cpp submodule");
+        LOGGER.Info("\n=== Testing Manual Commands ===");
 
-    // Test different log levels
-    logger.Error("Test ERROR level - this is red");
-    logger.Warn("Test WARN level - this is yellow");
-    logger.Info("Test INFO level - this is green");
-    logger.Debug("Test DEBUG level - this is cyan");
+        // Test MOV commands
+        LOGGER.Info("Executing: mov ax, 10");
+        sim.run_command("mov ax, 10");
+        LOGGER.Info("Registers: {}", sim.get_registers().dump());
 
-    // Test format strings
-    int test_value = 42;
-    logger.Info("Format test: answer = {}", test_value);
-    logger.Debug("Format test: multiple values = {}, {}, {}", 1, 2, 3);
+        LOGGER.Info("Executing: mov bx, 20");
+        sim.run_command("mov bx, 20");
+        LOGGER.Info("Registers: {}", sim.get_registers().dump());
 
-    // Change verbosity
-    logger.Info("\n=== Changing to Error level only ===");
-    logger.SetLevel(LogLevel::Error);
-    logger.Error("Only errors will show now");
-    logger.Warn("This won't show");
-    logger.Info("This won't show either");
+        // Test ADD command
+        LOGGER.Info("Executing: add ax, bx");
+        sim.run_command("add ax, bx");
+        LOGGER.Info("Registers: {}", sim.get_registers().dump());
 
-    // Reset to Info
-    logger.SetLevel(LogLevel::Info);
-    logger.Info("\n=== Logger sanity check completed successfully ===");
-    logger.Info("Logger submodule integration verified!");
+        // Test SUB command
+        LOGGER.Info("Executing: sub ax, 5");
+        sim.run_command("sub ax, 5");
+        LOGGER.Info("Registers: {}", sim.get_registers().dump());
+
+        // Test CMP command
+        LOGGER.Info("Executing: cmp ax, bx");
+        sim.run_command("cmp ax, bx");
+        LOGGER.Info("Registers: {}", sim.get_registers().dump());
+
+        LOGGER.Info("\n=== Testing with Debug Level ===");
+        LOGGER.SetLevel(LogLevel::Debug);
+
+        LOGGER.Info("Executing: mov cx, 100");
+        sim.run_command("mov cx, 100");
+
+        LOGGER.Info("Executing: add cx, 50");
+        sim.run_command("add cx, 50");
+
+        LOGGER.Info("\n=== Simulator Test Completed Successfully ===");
+
+    } catch (const std::exception& e) {
+        LOGGER.Error("Simulator error: {}", e.what());
+        return 1;
+    }
 
     return 0;
 }

@@ -10,30 +10,39 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../shared/logger_cpp
                  ${CMAKE_CURRENT_BINARY_DIR}/logger_cpp)
 
-# Create simulator library (currently incomplete, commented out)
-# add_library(simulator_lib
-#     source/registers.cpp
-#     source/simulator.cpp
-# )
-#
-# target_include_directories(simulator_lib
-#     PUBLIC
-#         ${CMAKE_CURRENT_SOURCE_DIR}/include
-# )
+# Create simulator library
+add_library(simulator_lib
+    source/registers.cpp
+    source/simulator.cpp
+    source/commands.cpp
+)
 
-# Create logger test executable
+target_include_directories(simulator_lib
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(simulator_lib
+    PUBLIC
+        Logger::logger_cpp
+)
+
+# Create main executable
 add_executable(simulator_main
     source/main.cpp
 )
 
 target_link_libraries(simulator_main
     PRIVATE
+        simulator_lib
         Logger::logger_cpp
 )
 
 # Set compiler warnings
 if(MSVC)
+    target_compile_options(simulator_lib PRIVATE /W4)
     target_compile_options(simulator_main PRIVATE /W4)
 else()
+    target_compile_options(simulator_lib PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(simulator_main PRIVATE -Wall -Wextra -Wpedantic)
 endif()
