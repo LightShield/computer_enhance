@@ -14,6 +14,8 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../shared/configs_loader
 
 # Create simulator library
 add_library(simulator_lib
+    source/register_types.cpp
+    source/register_proxy.cpp
     source/registers.cpp
     source/simulator.cpp
     source/commands.cpp
