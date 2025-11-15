@@ -3,43 +3,53 @@
 #include "logger.h"
 #include "simulator.h"
 
+struct SimulatorConfigs {
+    Config<std::string> input_file{
+        "input_file",
+        nullptr,
+        "--input",
+        "Path to assembly file to simulate",
+        true,
+        ""
+    };
+
+    Config<std::string> verbosity{
+        "verbosity",
+        "-v",
+        "--verbosity",
+        "Set log verbosity level",
+        false,
+        "info"
+    };
+
+    auto get_all_configs() {
+        return std::tie(input_file, verbosity);
+    }
+
+    auto get_all_configs() const {
+        return std::tie(input_file, verbosity);
+    }
+};
+
 int main(int argc, char* argv[]) {
-    ConfigsLoader configs(argv[0]);
-
-    ConfigsLoader::PositionalConfig input_config = {
-        .name = "input_file",
-        .description = "Path to assembly file to simulate",
-        .required = true
-    };
-    configs.add_positional(input_config);
-
-    ConfigsLoader::FlagConfig verbosity_config = {
-        .short_flag = "-v",
-        .long_flag = "--verbosity",
-        .description = "Set log verbosity level",
-        .value_name = "level"
-    };
-    configs.add_flag(verbosity_config);
+    ConfigsLoader<SimulatorConfigs> configs(argv[0]);
 
     if (!configs.parse_and_validate(argc, argv)) {
         Logger::Config error_config;
         error_config.print_metadata = false;
         Logger::Init(error_config);
-        LOGGER.Error("{}", configs.get_error());
-        configs.print_usage();
+        if (!configs.get_error().empty()) {
+            LOGGER.Error("{}", configs.get_error());
+            configs.print_usage();
+        }
         return 1;
     }
 
-    if (configs.has("help")) {
-        configs.print_usage();
-        return 0;
-    }
-
-    std::string input_file = configs.get_positional(0);
+    std::string input_file = configs.input_file.value;
 
     Logger::Config logger_config;
-    if (configs.has("verbosity")) {
-        logger_config.level = Logger::ParseLogLevel(configs.get("verbosity"));
+    if (configs.verbosity.was_provided) {
+        logger_config.level = Logger::ParseLogLevel(configs.verbosity.value);
     }
     Logger::Init(logger_config);
 
