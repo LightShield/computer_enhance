@@ -1,0 +1,3 @@
+[submodule "shared/logger_cpp"]
+	path = shared/logger_cpp
+	url = git@github.com:LightShield/logger_cpp.git
