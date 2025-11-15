@@ -107,7 +107,7 @@ class Simulator:
             flags_update = self._update_substraction_flags(subtraction_result)
             dest_reg -= value
             reg_name = self._get_register_name(dest_reg)
-            return  f'{reg_name} 0x{pre_command_value:04X} -> 0x{value:04X} {flags_update}'
+            return  f'{reg_name} {dest_reg} 0x{pre_command_value:04X} -> 0x{value:04X} {flags_update}'
         return self._handle_regs_command(command_parts, reg_sub_action)
         
     def _handle_cmp_command(self, command_parts):

@@ -1,9 +1,8 @@
-// simulator.h
 #pragma once
 #include <string>
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 #include "registers.h"
 
 // Represents expected state changes for a command

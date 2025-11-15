@@ -1,12 +1,11 @@
-// simulator.cpp
-#include "simulator.h"
-#include "commands.h"
-#include "logger.h"
+#include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 #include <vector>
-#include <algorithm>
-#include <iomanip>
+#include "commands.h"
+#include "logger.h"
+#include "simulator.h"
 
 static std::vector<std::string> split(const std::string& s) {
     std::istringstream iss(s);

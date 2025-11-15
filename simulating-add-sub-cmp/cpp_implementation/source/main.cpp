@@ -1,67 +1,72 @@
+#include <iostream>
+#include <stdexcept>
+#include <string>
 #include "logger.h"
 #include "simulator.h"
-#include <stdexcept>
 
-int main() {
-    // Initialize logger with Info level for cleaner output
+void print_usage(const char* program_name) {
+    LOGGER.Info("Usage: {} [options] <input_file>", program_name);
+    LOGGER.Info("Options:");
+    LOGGER.Info("  -v, --verbosity <level>  Set log verbosity (debug, info, warn, error)");
+    LOGGER.Info("                           Default: info");
+    LOGGER.Info("\nExample:");
+    LOGGER.Info("  {} ../resources/listing_0046_add_sub_cmp.txt", program_name);
+    LOGGER.Info("  {} -v debug test.txt", program_name);
+}
+
+LogLevel parse_log_level(const std::string& level_str) {
+    if (level_str == "debug") return LogLevel::Debug;
+    if (level_str == "info") return LogLevel::Info;
+    if (level_str == "warn") return LogLevel::Warn;
+    if (level_str == "error") return LogLevel::Error;
+
+    LOGGER.Warn("Unknown log level '{}', defaulting to Info", level_str);
+    return LogLevel::Info;
+}
+
+int main(int argc, char* argv[]) {
+    LogLevel log_level = LogLevel::Info;
+    std::string input_file;
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+
+        if (arg == "-v" || arg == "--verbosity") {
+            if (i + 1 < argc) {
+                log_level = parse_log_level(argv[++i]);
+            } else {
+                std::cerr << "Error: --verbosity requires an argument\n";
+                return 1;
+            }
+        } else if (arg == "-h" || arg == "--help") {
+            Logger::Config config;
+            config.level = LogLevel::Info;
+            Logger::Init(config);
+            print_usage(argv[0]);
+            return 0;
+        } else {
+            input_file = arg;
+        }
+    }
+
     Logger::Config config;
-    config.level = LogLevel::Info;
+    config.level = log_level;
     Logger::Init(config);
 
+    if (input_file.empty()) {
+        LOGGER.Error("No input file specified");
+        print_usage(argv[0]);
+        return 1;
+    }
+
     LOGGER.Info("=== Computer Enhance - 8086 Simulator ===");
-    LOGGER.Info("Simulator with integrated zero-overhead logger");
+    LOGGER.Debug("Log level: {}", static_cast<int>(log_level));
 
     try {
-        // Create simulator instance
         Simulator sim;
-
-        LOGGER.Info("\n=== Testing Manual Commands ===");
-
-        // Test MOV commands
-        LOGGER.Info("Executing: mov ax, 10");
-        sim.run_command("mov ax, 10");
-        LOGGER.Info("Registers: {}", sim.get_registers().dump());
-
-        LOGGER.Info("Executing: mov bx, 20");
-        sim.run_command("mov bx, 20");
-        LOGGER.Info("Registers: {}", sim.get_registers().dump());
-
-        // Test ADD command
-        LOGGER.Info("Executing: add ax, bx");
-        sim.run_command("add ax, bx");
-        LOGGER.Info("Registers: {}", sim.get_registers().dump());
-
-        // Test SUB command
-        LOGGER.Info("Executing: sub ax, 5");
-        sim.run_command("sub ax, 5");
-        LOGGER.Info("Registers: {}", sim.get_registers().dump());
-
-        // Test CMP command
-        LOGGER.Info("Executing: cmp ax, bx");
-        sim.run_command("cmp ax, bx");
-        LOGGER.Info("Registers: {}", sim.get_registers().dump());
-
-        LOGGER.Info("\n=== Testing with Debug Level ===");
-        LOGGER.SetLevel(LogLevel::Debug);
-
-        LOGGER.Info("Executing: mov cx, 100");
-        sim.run_command("mov cx, 100");
-
-        LOGGER.Info("Executing: add cx, 50");
-        sim.run_command("add cx, 50");
-
-        LOGGER.Info("\n=== Testing run_simulation with test file ===");
-        Simulator sim2;
-        sim2.run_simulation("test_commands.txt");
-        LOGGER.Info("Final registers: {}", sim2.get_registers().dump());
-
-        LOGGER.Info("\n=== Testing run_simulation with resource file ===");
-        Simulator sim3;
-        sim3.run_simulation("../resources/listing_0046_add_sub_cmp.txt");
-        LOGGER.Info("Final registers: {}", sim3.get_registers().dump());
-
-        LOGGER.Info("\n=== Simulator Test Completed Successfully ===");
-
+        sim.run_simulation(input_file);
+        LOGGER.Info("Final registers: {}", sim.get_registers().dump());
+        LOGGER.Info("\n=== Simulation completed successfully ===");
     } catch (const std::exception& e) {
         LOGGER.Error("Simulator error: {}", e.what());
         return 1;

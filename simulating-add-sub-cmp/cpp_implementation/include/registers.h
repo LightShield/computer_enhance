@@ -85,12 +85,12 @@ struct Registers;
 // Register proxies for automatic change tracking
 // ========================
 struct Register16Proxy {
-    Registers& regs;
     std::string name;
+    Registers& regs;
     uint16_t* ptr;
 
     Register16Proxy(Registers& r, const std::string& n, uint16_t* p)
-        : regs(r), name(n), ptr(p) {}
+        : name(n), regs(r), ptr(p) {}
 
     // Assignment operator - tracks change automatically
     Register16Proxy& operator=(uint16_t value);
@@ -104,12 +104,12 @@ struct Register16Proxy {
 };
 
 struct Register8Proxy {
-    Registers& regs;
     std::string name;
+    Registers& regs;
     uint8_t* ptr;
 
     Register8Proxy(Registers& r, const std::string& n, uint8_t* p)
-        : regs(r), name(n), ptr(p) {}
+        : name(n), regs(r), ptr(p) {}
 
     // Assignment operator - tracks change automatically
     Register8Proxy& operator=(uint8_t value);
@@ -126,11 +126,11 @@ struct Register8Proxy {
 // Registers block
 // ========================
 struct Registers {
-    Register16 ax, bx, cx, dx, si, di, bp, sp;
-    Flags flags;
-
     std::unordered_map<std::string, Register16*> reg16_map;
     std::unordered_map<std::string, uint8_t*> reg8_map;
+
+    Register16 ax, bx, cx, dx, si, di, bp, sp;
+    Flags flags;
 
     Registers();
 

@@ -1,7 +1,7 @@
-#include "registers.h"
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 #include <stdexcept>
+#include "registers.h"
 
 // ========================
 // Register16
