@@ -3,4 +3,4 @@
 	url = git@github.com:LightShield/logger_cpp.git
 [submodule "shared/configs_loader"]
 	path = shared/configs_loader
-	url = ./shared/configs_loader
+	url = git@github.com:LightShield/ConfigsLoader_cpp.git
