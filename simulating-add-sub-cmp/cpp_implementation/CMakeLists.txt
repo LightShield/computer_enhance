@@ -6,9 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Add the logger_cpp submodule
+# Add shared submodules
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../shared/logger_cpp
                  ${CMAKE_CURRENT_BINARY_DIR}/logger_cpp)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../shared/configs_loader
+                 ${CMAKE_CURRENT_BINARY_DIR}/configs_loader)
 
 # Create simulator library
 add_library(simulator_lib
@@ -36,6 +38,7 @@ target_link_libraries(simulator_main
     PRIVATE
         simulator_lib
         Logger::logger_cpp
+        ConfigsLoader::configs_loader
 )
 
 # Set compiler warnings (all, extra, padding, shadow)
