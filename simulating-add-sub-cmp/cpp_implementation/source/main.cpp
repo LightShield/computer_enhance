@@ -5,10 +5,28 @@
 
 int main(int argc, char* argv[]) {
     ConfigsLoader configs(argv[0]);
-    configs.add_positional("input_file", "Path to assembly file to simulate");
-    configs.add_flag("-v", "--verbosity", "Set log verbosity level", "level");
 
-    if (!configs.parse(argc, argv)) {
+    ConfigsLoader::PositionalConfig input_config = {
+        .name = "input_file",
+        .description = "Path to assembly file to simulate",
+        .required = true
+    };
+    configs.add_positional(input_config);
+
+    ConfigsLoader::FlagConfig verbosity_config = {
+        .short_flag = "-v",
+        .long_flag = "--verbosity",
+        .description = "Set log verbosity level",
+        .value_name = "level"
+    };
+    configs.add_flag(verbosity_config);
+
+    if (!configs.parse_and_validate(argc, argv)) {
+        Logger::Config error_config;
+        error_config.print_metadata = false;
+        Logger::Init(error_config);
+        LOGGER.Error("{}", configs.get_error());
+        configs.print_usage();
         return 1;
     }
 
@@ -18,14 +36,6 @@ int main(int argc, char* argv[]) {
     }
 
     std::string input_file = configs.get_positional(0);
-    if (input_file.empty()) {
-        Logger::Config error_config;
-        error_config.print_metadata = false;
-        Logger::Init(error_config);
-        LOGGER.Error("No input file specified");
-        configs.print_usage();
-        return 1;
-    }
 
     Logger::Config logger_config;
     if (configs.has("verbosity")) {
