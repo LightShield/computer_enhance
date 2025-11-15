@@ -56,18 +56,18 @@ Registers::Registers() {
     };
 }
 
-uint16_t& Registers::get16(const std::string& name) {
+Register16Proxy Registers::get16(const std::string& name) {
     auto it = reg16_map.find(name);
     if (it == reg16_map.end())
         throw std::runtime_error("Unknown 16-bit register: " + name);
-    return it->second->value;
+    return Register16Proxy(*this, name, &(it->second->value));
 }
 
-uint8_t& Registers::get8(const std::string& name) {
+Register8Proxy Registers::get8(const std::string& name) {
     auto it = reg8_map.find(name);
     if (it == reg8_map.end())
         throw std::runtime_error("Unknown 8-bit register: " + name);
-    return *it->second;
+    return Register8Proxy(*this, name, it->second);
 }
 
 bool Registers::is8(const std::string& name) const {
@@ -93,4 +93,102 @@ std::string Registers::dump() const {
         << flags.dump();
 
     return out.str();
+}
+
+void Registers::mark_register_change(const std::string& name, uint16_t old_value, uint16_t new_value) {
+    if (old_value != new_value) {
+        m_change_set.register_changes.push_back({name, old_value, new_value});
+    }
+}
+
+void Registers::mark_flag_change(const std::string& flag_name, bool old_value, bool new_value) {
+    if (old_value != new_value) {
+        m_change_set.flags_changes.push_back({flag_name, old_value, new_value});
+    }
+}
+
+ChangeSet Registers::get_last_changes() {
+    ChangeSet result = m_change_set;
+    m_change_set.clear();
+    return result;
+}
+
+void Registers::capture_flags() {
+    m_captured_flags_value = flags.value;
+}
+
+void Registers::check_flag_changes() {
+    uint16_t current_flags = flags.value;
+
+    // Check each flag bit and record changes
+    const struct {
+        const char* name;
+        uint16_t mask;
+    } flag_bits[] = {
+        {"CF", 0x0001},
+        {"PF", 0x0004},
+        {"AF", 0x0010},
+        {"ZF", 0x0040},
+        {"SF", 0x0080},
+        {"TF", 0x0100},
+        {"IF", 0x0200},
+        {"DF", 0x0400},
+        {"OF", 0x0800}
+    };
+
+    for (const auto& flag : flag_bits) {
+        bool old_val = (m_captured_flags_value & flag.mask) != 0;
+        bool new_val = (current_flags & flag.mask) != 0;
+        if (old_val != new_val) {
+            mark_flag_change(flag.name, old_val, new_val);
+        }
+    }
+}
+
+// ========================
+// Register16Proxy operators
+// ========================
+Register16Proxy& Register16Proxy::operator=(uint16_t value) {
+    uint16_t old_value = *ptr;
+    *ptr = value;
+    regs.mark_register_change(name, old_value, value);
+    return *this;
+}
+
+Register16Proxy& Register16Proxy::operator+=(uint16_t value) {
+    uint16_t old_value = *ptr;
+    *ptr += value;
+    regs.mark_register_change(name, old_value, *ptr);
+    return *this;
+}
+
+Register16Proxy& Register16Proxy::operator-=(uint16_t value) {
+    uint16_t old_value = *ptr;
+    *ptr -= value;
+    regs.mark_register_change(name, old_value, *ptr);
+    return *this;
+}
+
+// ========================
+// Register8Proxy operators
+// ========================
+Register8Proxy& Register8Proxy::operator=(uint8_t value) {
+    uint8_t old_value = *ptr;
+    *ptr = value;
+    regs.mark_register_change(name, old_value, value);
+    return *this;
+}
+
+Register8Proxy& Register8Proxy::operator+=(uint8_t value) {
+    uint8_t old_value = *ptr;
+    *ptr += value;
+    regs.mark_register_change(name, old_value, *ptr);
+    return *this;
+}
+
+Register8Proxy& Register8Proxy::operator-=(uint8_t value) {
+    uint8_t old_value = *ptr;
+    *ptr -= value;
+    regs.mark_register_change(name, old_value, *ptr);
+    return *this;
 }

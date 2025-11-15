@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 // ========================
 // 16-bit Register
@@ -49,6 +50,79 @@ struct Flags {
 };
 
 // ========================
+// Register change tracking
+// ========================
+struct RegisterChange {
+    std::string name;
+    uint16_t old_value;
+    uint16_t new_value;
+};
+
+struct FlagsChange {
+    std::string flag_name;
+    bool old_value;
+    bool new_value;
+};
+
+struct ChangeSet {
+    std::vector<RegisterChange> register_changes;
+    std::vector<FlagsChange> flags_changes;
+
+    bool has_changes() const {
+        return !register_changes.empty() || !flags_changes.empty();
+    }
+
+    void clear() {
+        register_changes.clear();
+        flags_changes.clear();
+    }
+};
+
+// Forward declaration
+struct Registers;
+
+// ========================
+// Register proxies for automatic change tracking
+// ========================
+struct Register16Proxy {
+    Registers& regs;
+    std::string name;
+    uint16_t* ptr;
+
+    Register16Proxy(Registers& r, const std::string& n, uint16_t* p)
+        : regs(r), name(n), ptr(p) {}
+
+    // Assignment operator - tracks change automatically
+    Register16Proxy& operator=(uint16_t value);
+
+    // Compound assignment operators - track changes automatically
+    Register16Proxy& operator+=(uint16_t value);
+    Register16Proxy& operator-=(uint16_t value);
+
+    // Implicit conversion for reading
+    operator uint16_t() const { return *ptr; }
+};
+
+struct Register8Proxy {
+    Registers& regs;
+    std::string name;
+    uint8_t* ptr;
+
+    Register8Proxy(Registers& r, const std::string& n, uint8_t* p)
+        : regs(r), name(n), ptr(p) {}
+
+    // Assignment operator - tracks change automatically
+    Register8Proxy& operator=(uint8_t value);
+
+    // Compound assignment operators - track changes automatically
+    Register8Proxy& operator+=(uint8_t value);
+    Register8Proxy& operator-=(uint8_t value);
+
+    // Implicit conversion for reading
+    operator uint8_t() const { return *ptr; }
+};
+
+// ========================
 // Registers block
 // ========================
 struct Registers {
@@ -60,11 +134,24 @@ struct Registers {
 
     Registers();
 
-    uint16_t& get16(const std::string& name);
-    uint8_t& get8(const std::string& name);
+    Register16Proxy get16(const std::string& name);
+    Register8Proxy get8(const std::string& name);
 
     bool is8(const std::string& name) const;
     bool is16(const std::string& name) const;
 
     std::string dump() const;
+
+    // Change tracking API (used internally by proxies)
+    void mark_register_change(const std::string& name, uint16_t old_value, uint16_t new_value);
+    void mark_flag_change(const std::string& flag_name, bool old_value, bool new_value);
+    ChangeSet get_last_changes();  // Returns changes and clears tracking
+
+    // Flag tracking helpers
+    void capture_flags();  // Capture current flags state before command
+    void check_flag_changes();  // Check which flags changed after command
+
+private:
+    ChangeSet m_change_set;
+    uint16_t m_captured_flags_value;
 };

@@ -50,6 +50,16 @@ int main() {
         LOGGER.Info("Executing: add cx, 50");
         sim.run_command("add cx, 50");
 
+        LOGGER.Info("\n=== Testing run_simulation with test file ===");
+        Simulator sim2;
+        sim2.run_simulation("test_commands.txt");
+        LOGGER.Info("Final registers: {}", sim2.get_registers().dump());
+
+        LOGGER.Info("\n=== Testing run_simulation with resource file ===");
+        Simulator sim3;
+        sim3.run_simulation("../resources/listing_0046_add_sub_cmp.txt");
+        LOGGER.Info("Final registers: {}", sim3.get_registers().dump());
+
         LOGGER.Info("\n=== Simulator Test Completed Successfully ===");
 
     } catch (const std::exception& e) {
