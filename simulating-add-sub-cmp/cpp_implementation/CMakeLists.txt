@@ -38,11 +38,11 @@ target_link_libraries(simulator_main
         Logger::logger_cpp
 )
 
-# Set compiler warnings
+# Set compiler warnings (all, extra, padding, shadow)
 if(MSVC)
     target_compile_options(simulator_lib PRIVATE /W4)
     target_compile_options(simulator_main PRIVATE /W4)
 else()
-    target_compile_options(simulator_lib PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(simulator_main PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(simulator_lib PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wpadding)
+    target_compile_options(simulator_main PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wpadding)
 endif()

@@ -64,7 +64,7 @@ std::string Simulator::run_command(const std::string& line) {
 
     LOGGER.Debug("Looking up command: {} (hash: {})", cmd, cmd_hash);
 
-    for (size_t i = 0; i < commands_table_size; ++i) {
+    for (size_t i = 0; i < COMMANDS_TABLE_SIZE; ++i) {
         if (commands_table[i].hash == cmd_hash) {
             // Pass Registers and arguments excluding command itself
             std::vector<std::string> args(tokens.begin() + 1, tokens.end());

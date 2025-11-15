@@ -13,9 +13,12 @@ struct CommandEntry {
     CommandHandler handler;
 };
 
-// Simple hash function for command names
-inline uint32_t hash_command(const char* str) {
-    uint32_t hash = 5381;
+// DJB2 hash algorithm initial value
+constexpr uint32_t DJB2_HASH_INIT = 5381;
+
+// Simple constexpr hash function for command names (DJB2 algorithm)
+constexpr uint32_t hash_command(const char* str) {
+    uint32_t hash = DJB2_HASH_INIT;
     while (*str) {
         hash = ((hash << 5) + hash) + static_cast<unsigned char>(*str);
         str++;
@@ -30,8 +33,8 @@ std::string cmd_sub(Registers& regs, const std::vector<std::string>& args);
 std::string cmd_cmp(Registers& regs, const std::vector<std::string>& args);
 
 // Command table
-constexpr size_t commands_table_size = 4;
-inline CommandEntry commands_table[commands_table_size] = {
+constexpr size_t COMMANDS_TABLE_SIZE = 4;
+inline CommandEntry commands_table[COMMANDS_TABLE_SIZE] = {
     {hash_command("mov"), cmd_mov},
     {hash_command("add"), cmd_add},
     {hash_command("sub"), cmd_sub},
