@@ -31,4 +31,5 @@ public:
 private:
     CommandLine parse_command_line(const std::string& line);
     void compare_with_expected(const ExpectedState& expected);
+    void compare_final_state(const std::vector<std::string>& final_section);
 };

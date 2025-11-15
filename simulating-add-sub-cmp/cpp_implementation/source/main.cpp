@@ -65,8 +65,6 @@ int main(int argc, char* argv[]) {
     try {
         Simulator sim;
         sim.run_simulation(input_file);
-        LOGGER.Info("Final registers: {}", sim.get_registers().dump());
-        LOGGER.Info("\n=== Simulation completed successfully ===");
     } catch (const std::exception& e) {
         LOGGER.Error("Simulator error: {}", e.what());
         return 1;

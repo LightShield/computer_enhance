@@ -28,13 +28,24 @@ void Simulator::run_simulation(const std::string& filepath) {
 
     std::string line;
     int line_num = 0;
+    std::vector<std::string> final_section;
+    bool in_final_section = false;
+
     while (std::getline(file, line)) {
         line_num++;
 
         if (line.find("Final") == 0) {
-            LOGGER.Info("Found 'Final' marker at line {}, stopping simulation", line_num);
-            break;
+            LOGGER.Debug("Found 'Final' marker at line {}", line_num);
+            in_final_section = true;
+            final_section.push_back(line);
+            continue;
         }
+
+        if (in_final_section) {
+            final_section.push_back(line);
+            continue;
+        }
+
         if (line.empty() || line[0] == '-' || std::isspace(line[0])) continue;
 
         LOGGER.Debug("Processing line {}: {}", line_num, line);
@@ -42,19 +53,13 @@ void Simulator::run_simulation(const std::string& filepath) {
         try {
             CommandLine cmd_line = parse_command_line(line);
 
-            // Capture flags state before command
             m_regs.capture_flags();
-
             std::string result = run_command(cmd_line.command);
-            LOGGER.Info("Command result: {}", result);
-
-            // Check for flag changes after command
             m_regs.check_flag_changes();
 
-            // Get and display only the changes
             ChangeSet changes = m_regs.get_last_changes();
+            std::ostringstream change_str;
             if (changes.has_changes()) {
-                std::ostringstream change_str;
                 for (const auto& reg_change : changes.register_changes) {
                     change_str << reg_change.name << ":0x" << std::hex << reg_change.old_value
                               << "->0x" << reg_change.new_value << " ";
@@ -64,10 +69,20 @@ void Simulator::run_simulation(const std::string& filepath) {
                               << (flag_change.old_value ? "1" : "0") << "->"
                               << (flag_change.new_value ? "1" : "0") << " ";
                 }
-                LOGGER.Info("Changes: {}", change_str.str());
             }
 
-            // Compare with expected if available
+            size_t comment_pos = line.find(';');
+            std::string display_line = (comment_pos != std::string::npos) ? line.substr(0, comment_pos) : line;
+            while (!display_line.empty() && std::isspace(display_line.back())) {
+                display_line.pop_back();
+            }
+
+            if (change_str.str().empty()) {
+                LOGGER.Info("{}", display_line);
+            } else {
+                LOGGER.Info("{} ; {}", display_line, change_str.str());
+            }
+
             if (cmd_line.has_expected) {
                 compare_with_expected(cmd_line.expected);
             }
@@ -76,7 +91,11 @@ void Simulator::run_simulation(const std::string& filepath) {
         }
     }
 
-    LOGGER.Info("Simulation completed");
+    LOGGER.Info("");
+    if (!final_section.empty()) {
+        LOGGER.Info("Final state comparison:");
+        compare_final_state(final_section);
+    }
 }
 
 std::string Simulator::run_command(const std::string& line) {
@@ -176,10 +195,17 @@ CommandLine Simulator::parse_command_line(const std::string& line) {
     return result;
 }
 
+static std::string trim(const std::string& str) {
+    size_t start = 0;
+    while (start < str.size() && std::isspace(str[start])) start++;
+    size_t end = str.size();
+    while (end > start && std::isspace(str[end - 1])) end--;
+    return str.substr(start, end - start);
+}
+
 void Simulator::compare_with_expected(const ExpectedState& expected) {
     bool all_match = true;
 
-    // Check expected register changes
     for (const auto& [reg_name, expected_value] : expected.register_changes) {
         uint16_t actual_value;
         if (m_regs.is8(reg_name)) {
@@ -199,7 +225,6 @@ void Simulator::compare_with_expected(const ExpectedState& expected) {
         }
     }
 
-    // Check expected flags set
     for (const auto& flag_name : expected.flags_set) {
         bool flag_value = false;
         if (flag_name == "C") flag_value = m_regs.flags.CF;
@@ -222,7 +247,6 @@ void Simulator::compare_with_expected(const ExpectedState& expected) {
         }
     }
 
-    // Check expected flags cleared
     for (const auto& flag_name : expected.flags_cleared) {
         bool flag_value = false;
         if (flag_name == "C") flag_value = m_regs.flags.CF;
@@ -247,5 +271,79 @@ void Simulator::compare_with_expected(const ExpectedState& expected) {
 
     if (all_match && (expected.register_changes.size() > 0 || expected.flags_set.size() > 0 || expected.flags_cleared.size() > 0)) {
         LOGGER.Debug("All expected changes match!");
+    }
+}
+
+void Simulator::compare_final_state(const std::vector<std::string>& final_section) {
+    std::unordered_map<std::string, uint16_t> expected_regs;
+    std::string expected_flags;
+
+    for (const auto& line : final_section) {
+        LOGGER.Info("{}", line);
+
+        std::string trimmed = trim(line);
+        if (trimmed.find("Final") == 0 || trimmed.empty()) continue;
+
+        size_t colon_pos = trimmed.find(':');
+        if (colon_pos == std::string::npos) continue;
+
+        std::string key = trim(trimmed.substr(0, colon_pos));
+        std::string value_str = trim(trimmed.substr(colon_pos + 1));
+
+        if (key == "flags") {
+            expected_flags = value_str;
+        } else {
+            size_t hex_pos = value_str.find("0x");
+            if (hex_pos != std::string::npos) {
+                size_t end_pos = value_str.find(' ', hex_pos);
+                std::string hex_val = value_str.substr(hex_pos + 2, end_pos - hex_pos - 2);
+                uint16_t reg_value = static_cast<uint16_t>(std::stoul(hex_val, nullptr, 16));
+                expected_regs[key] = reg_value;
+            }
+        }
+    }
+
+    LOGGER.Info("");
+    LOGGER.Info("Actual final state:");
+
+    bool has_diff = false;
+    std::ostringstream actual_output;
+
+    for (const auto& [reg_name, expected_value] : expected_regs) {
+        uint16_t actual_value = 0;
+        if (m_regs.is16(reg_name)) {
+            actual_value = m_regs.get16(reg_name);
+        }
+
+        actual_output << "      " << reg_name << ": 0x" << std::hex << std::setw(4) << std::setfill('0')
+                     << actual_value << " (" << std::dec << actual_value << ")";
+
+        if (actual_value != expected_value) {
+            actual_output << " <-- MISMATCH (expected 0x" << std::hex << expected_value << ")";
+            has_diff = true;
+        }
+        actual_output << "\n";
+    }
+
+    std::string actual_flags_str;
+    if (m_regs.flags.CF) actual_flags_str += "C";
+    if (m_regs.flags.PF) actual_flags_str += "P";
+    if (m_regs.flags.AF) actual_flags_str += "A";
+    if (m_regs.flags.ZF) actual_flags_str += "Z";
+    if (m_regs.flags.SF) actual_flags_str += "S";
+    if (m_regs.flags.OF) actual_flags_str += "O";
+    if (m_regs.flags.DF) actual_flags_str += "D";
+    if (m_regs.flags.IF) actual_flags_str += "I";
+
+    actual_output << "   flags: " << actual_flags_str;
+    if (actual_flags_str != expected_flags) {
+        actual_output << " <-- MISMATCH (expected " << expected_flags << ")";
+        has_diff = true;
+    }
+
+    LOGGER.Info("{}", actual_output.str());
+
+    if (!has_diff) {
+        LOGGER.Info("\nAll final state values match!");
     }
 }
