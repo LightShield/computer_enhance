@@ -36,8 +36,8 @@ static int parse_operand(Registers& regs, const std::string& operand) {
 static constexpr uint8_t BITS_IN_BYTE = 8;
 
 static bool calculate_parity(uint8_t value) {
-    int count = 0;
-    for (int i = 0; i < BITS_IN_BYTE; i++) {
+    uint8_t count = 0;
+    for (uint8_t i = 0; i < BITS_IN_BYTE; i++) {
         if (value & (1 << i)) count++;
     }
     return (count % 2) == 0;
