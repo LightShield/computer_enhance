@@ -1,59 +1,61 @@
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
+
 #include "registers.h"
 
-Registers::Registers() {
-    reg16_map = {
-        {"ax", &ax}, {"bx", &bx}, {"cx", &cx}, {"dx", &dx},
-        {"si", &si}, {"di", &di}, {"bp", &bp}, {"sp", &sp},
+Registers::Registers() : m_captured_flags_value(0) {
+    m_reg16_map = {
+        {"ax", &m_ax}, {"bx", &m_bx}, {"cx", &m_cx}, {"dx", &m_dx},
+        {"si", &m_si}, {"di", &m_di}, {"bp", &m_bp}, {"sp", &m_sp}, {"ip", &m_ip}
     };
 
-    reg8_map = {
-        {"ah", &ax.high}, {"al", &ax.low},
-        {"bh", &bx.high}, {"bl", &bx.low},
-        {"ch", &cx.high}, {"cl", &cx.low},
-        {"dh", &dx.high}, {"dl", &dx.low},
+    m_reg8_map = {
+        {"ah", &m_ax.high}, {"al", &m_ax.low},
+        {"bh", &m_bx.high}, {"bl", &m_bx.low},
+        {"ch", &m_cx.high}, {"cl", &m_cx.low},
+        {"dh", &m_dx.high}, {"dl", &m_dx.low},
     };
 }
 
 Register16Proxy Registers::get16(const std::string& name) {
-    auto it = reg16_map.find(name);
-    if (it == reg16_map.end()) {
+    auto it = m_reg16_map.find(name);
+    if (it == m_reg16_map.end()) {
         throw std::runtime_error("Unknown 16-bit register: " + name);
     }
     return Register16Proxy(*this, name, &(it->second->value));
 }
 
 Register8Proxy Registers::get8(const std::string& name) {
-    auto it = reg8_map.find(name);
-    if (it == reg8_map.end()) {
+    auto it = m_reg8_map.find(name);
+    if (it == m_reg8_map.end()) {
         throw std::runtime_error("Unknown 8-bit register: " + name);
     }
     return Register8Proxy(*this, name, it->second);
 }
 
 bool Registers::is8(const std::string& name) const {
-    return reg8_map.count(name) > 0;
+    return m_reg8_map.count(name) > 0;
 }
 
 bool Registers::is16(const std::string& name) const {
-    return reg16_map.count(name) > 0;
+    return m_reg16_map.count(name) > 0;
 }
 
 std::string Registers::dump() const {
     std::ostringstream out;
     out << std::hex << std::uppercase << std::setfill('0');
 
-    out << "AX=" << std::setw(4) << ax.value << " "
-        << "BX=" << std::setw(4) << bx.value << " "
-        << "CX=" << std::setw(4) << cx.value << " "
-        << "DX=" << std::setw(4) << dx.value << " "
-        << "SI=" << std::setw(4) << si.value << " "
-        << "DI=" << std::setw(4) << di.value << " "
-        << "BP=" << std::setw(4) << bp.value << " "
-        << "SP=" << std::setw(4) << sp.value << " | "
-        << flags.dump();
+    out << "AX=" << std::setw(4) << m_ax.value << " "
+        << "BX=" << std::setw(4) << m_bx.value << " "
+        << "CX=" << std::setw(4) << m_cx.value << " "
+        << "DX=" << std::setw(4) << m_dx.value << " "
+        << "SI=" << std::setw(4) << m_si.value << " "
+        << "DI=" << std::setw(4) << m_di.value << " "
+        << "BP=" << std::setw(4) << m_bp.value << " "
+        << "SP=" << std::setw(4) << m_sp.value << " "
+        << "IP=" << std::setw(4) << m_ip.value << " | "
+        << m_flags.dump();
 
     return out.str();
 }
@@ -77,11 +79,11 @@ ChangeSet Registers::get_last_changes() {
 }
 
 void Registers::capture_flags() {
-    m_captured_flags_value = flags.value;
+    m_captured_flags_value = m_flags.value;
 }
 
 void Registers::check_flag_changes() {
-    uint16_t current_flags = flags.value;
+    uint16_t current_flags = m_flags.value;
 
     const struct {
         const char* name;

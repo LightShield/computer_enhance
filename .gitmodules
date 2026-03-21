@@ -4,3 +4,6 @@
 [submodule "shared/configs_loader"]
 	path = shared/configs_loader
 	url = git@github.com:LightShield/ConfigsLoader_cpp.git
+[submodule "external/computer_enhance"]
+	path = external/computer_enhance
+	url = https://github.com/cmuratori/computer_enhance.git

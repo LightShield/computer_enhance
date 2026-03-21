@@ -1,17 +1,15 @@
 #pragma once
+
+#include <memory>
 #include <string>
 #include <unordered_map>
+
 #include "change_tracking.h"
 #include "register_proxy.h"
 #include "register_types.h"
 
-struct Registers {
-    std::unordered_map<std::string, Register16*> reg16_map;
-    std::unordered_map<std::string, uint8_t*> reg8_map;
-
-    Register16 ax, bx, cx, dx, si, di, bp, sp;
-    Flags flags;
-
+class Registers {
+public:
     Registers();
 
     Register16Proxy get16(const std::string& name);
@@ -29,7 +27,19 @@ struct Registers {
     void capture_flags();
     void check_flag_changes();
 
+    // Accessors for simulator convenience
+    uint16_t get_ip() const { return m_ip.value; }
+    void set_ip(uint16_t value) { m_ip.value = value; }
+    
+    // Flags is public for easier manipulation in commands, but we could make it private
+    Flags m_flags;
+
 private:
+    std::unordered_map<std::string, Register16*> m_reg16_map;
+    std::unordered_map<std::string, uint8_t*> m_reg8_map;
+
+    Register16 m_ax, m_bx, m_cx, m_dx, m_si, m_di, m_bp, m_sp, m_ip;
+
     ChangeSet m_change_set;
     uint16_t m_captured_flags_value;
 };

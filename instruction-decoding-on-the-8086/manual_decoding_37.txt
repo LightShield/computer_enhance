@@ -1,1 +1,0 @@
-MOV CX, BX
