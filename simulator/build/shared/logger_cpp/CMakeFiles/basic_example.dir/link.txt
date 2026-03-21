@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/basic_example.dir/examples/basic_example.cpp.o -o basic_example  liblogger_cpp.a ../../_deps/fmt-build/libfmt.a

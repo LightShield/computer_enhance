@@ -8,13 +8,13 @@ This is a **LEARNING PROJECT** focused on low-level systems and architectures. T
 - **Pedagogical Communication:** Inquiries should be met with detailed technical rationale. Directives should be executed with "show-your-work" transparency regarding low-level details (e.g., bit manipulation, register usage, memory layouts).
 
 ## 2. Single Source of Truth
-This document defines the core operational mandates for Gemini CLI in this workspace. Technical standards and workflows are delegated to the local `Guidelines/` repository, which is the **single source of truth**. All coding standards, architectural patterns, and agent behaviors are defined in the following locations. **Always consult these before making changes or decisions.**
+This document defines the core operational mandates for Gemini CLI in this workspace. Technical standards and workflows are delegated to the local `../Guidelines/` repository, which is the **single source of truth**. All coding standards, architectural patterns, and agent behaviors are defined in the following locations. **Always consult these before making changes or decisions.**
 
-- **Common Guidelines:** [Guidelines/guidelines/common_guidelines](Guidelines/guidelines/common_guidelines)
-- **Python Standards:** [Guidelines/guidelines/python_guidelines](Guidelines/guidelines/python_guidelines)
-- **C++ Standards:** [Guidelines/guidelines/cpp_guidelines](Guidelines/guidelines/cpp_guidelines)
-- **Agent Patterns & Protocols:** [Guidelines/agents/agents_base.md](Guidelines/agents/agents_base.md)
-- **Verification Protocols:** [Guidelines/VERIFICATION.md](Guidelines/VERIFICATION.md)
+- **Common Guidelines:** [../../Guidelines/guidelines/common_guidelines](../Guidelines/guidelines/common_guidelines)
+- **Python Standards:** [../../Guidelines/guidelines/python_guidelines](../Guidelines/guidelines/python_guidelines)
+- **C++ Standards:** [../../Guidelines/guidelines/cpp_guidelines](../Guidelines/guidelines/cpp_guidelines)
+- **Agent Patterns & Protocols:** [../../Guidelines/agents/agents_base.md](../Guidelines/agents/agents_base.md)
+- **Verification Protocols:** [../../Guidelines/VERIFICATION.md](../Guidelines/VERIFICATION.md)
 
 ---
 

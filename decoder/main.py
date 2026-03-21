@@ -1,6 +1,11 @@
 import argparse
 import sys
-from decoder import Decoder
+import os
+
+# Add current directory to path so it can find decode_enums etc
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from decoder import decode_instruction
 from binary_stream import BinaryStream
 
 def main():
@@ -9,11 +14,13 @@ def main():
     args = parser.parse_args()
 
     stream = BinaryStream(args.filename)
-    decoder = Decoder(stream)
 
-    while stream.has_more_bytes():
+    while True:
         try:
-            instr = decoder.decode_next()
+            byte = stream.read_next_byte()
+            if byte is None:
+                break
+            instr = decode_instruction(stream, byte)
             if instr:
                 print(instr)
         except EOFError:

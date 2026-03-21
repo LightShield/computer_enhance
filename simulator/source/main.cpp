@@ -1,55 +1,49 @@
+#include <iostream>
 #include <stdexcept>
-#include "configs_loader.h"
+#include <tuple>
+#include "configs_loader.hpp"
 #include "logger.h"
 #include "simulator.h"
 
+using namespace lightshield::config;
+
 struct SimulatorConfigs {
     Config<std::string> input_file{
-        "input_file",
-        nullptr,
-        "--input",
-        "Path to assembly file to simulate",
-        true,
-        ""
+        .default_value = "",
+        .value = "",
+        .verifier = [](const std::string& v) { return !v.empty(); },
+        .flags = {"--input", "-i"},
+        .description = "Path to assembly file to simulate",
+        .required = true,
+        .is_set = false
     };
 
     Config<std::string> verbosity{
-        "verbosity",
-        "-v",
-        "--verbosity",
-        "Set log verbosity level",
-        false,
-        "info"
+        .default_value = "info",
+        .value = "info",
+        .verifier = [](const std::string&) { return true; },
+        .flags = {"--verbosity", "-v"},
+        .description = "Set log verbosity level",
+        .required = false,
+        .is_set = false
     };
 
-    auto get_all_configs() {
-        return std::tie(input_file, verbosity);
-    }
-
-    auto get_all_configs() const {
-        return std::tie(input_file, verbosity);
-    }
+    REGISTER_CONFIG_FIELDS(input_file, verbosity)
 };
 
 int main(int argc, char* argv[]) {
-    ConfigsLoader<SimulatorConfigs> configs(argv[0]);
+    ConfigsLoader<SimulatorConfigs> loader;
 
-    if (!configs.parse_and_validate(argc, argv)) {
-        Logger::Config error_config;
-        error_config.print_metadata = false;
-        Logger::Init(error_config);
-        if (!configs.get_error().empty()) {
-            LOGGER.Error("{}", configs.get_error());
-            configs.print_usage();
-        }
+    if (loader.init(argc, argv) != 0) {
+        // Error messages are already printed to stderr by loader.init()
         return 1;
     }
 
-    std::string input_file = configs.input_file.value;
+    std::string input_file = loader.configs.input_file.value;
 
     Logger::Config logger_config;
-    if (configs.verbosity.was_provided) {
-        logger_config.level = Logger::ParseLogLevel(configs.verbosity.value);
+    if (loader.configs.verbosity.is_set) {
+        logger_config.level = Logger::ParseLogLevel(loader.configs.verbosity.value);
     }
     Logger::Init(logger_config);
 
@@ -60,7 +54,7 @@ int main(int argc, char* argv[]) {
         sim.run_simulation(input_file);
         return 0;
     } catch (const std::exception& e) {
-        LOGGER.Error("Simulator error: {}", e.what());
+        LOGGER.Error("Simulator error: " + std::string(e.what()));
         return 1;
     }
 }

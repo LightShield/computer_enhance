@@ -17,6 +17,7 @@ struct CommandLine {
     std::string command;
     ExpectedState expected;
     bool has_expected;
+    uint16_t instruction_length;
 };
 
 class Simulator {
@@ -25,7 +26,7 @@ class Simulator {
 public:
     Simulator();
     void run_simulation(const std::string& filepath);
-    std::string run_command(const std::string& line);
+    std::string run_command(const std::string& line, uint16_t current_instr_end_ip);
     const Registers& get_registers() const { return m_regs; }
 
 private:

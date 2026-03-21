@@ -1,0 +1,2 @@
+/usr/bin/ar qc libconfigs_loader_preset_parser.a CMakeFiles/configs_loader_preset_parser.dir/src/serialization/preset_parser.cpp.o CMakeFiles/configs_loader_preset_parser.dir/src/serialization/toml_parser.cpp.o
+/usr/bin/ranlib libconfigs_loader_preset_parser.a
