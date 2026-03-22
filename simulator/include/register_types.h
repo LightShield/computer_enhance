@@ -10,7 +10,7 @@ struct Register16 {
         struct {
             uint8_t low;
             uint8_t high;
-        };
+        } bytes;
     };
 
     Register16();
@@ -23,7 +23,7 @@ struct Flags {
         uint16_t value;
         struct {
             uint16_t CF : 1;  // Carry
-            uint16_t    : 1;  // always 1 in 8086 but ignored here
+            uint16_t    : 1;  // always 1 in 8086
             uint16_t PF : 1;  // Parity
             uint16_t    : 1;
             uint16_t AF : 1;  // Auxiliary carry
@@ -35,7 +35,7 @@ struct Flags {
             uint16_t DF : 1;  // Direction
             uint16_t OF : 1;  // Overflow
             uint16_t    : 4;  // reserved
-        };
+        } bits;
     };
 
     Flags();

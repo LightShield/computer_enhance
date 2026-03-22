@@ -24,11 +24,11 @@ Simulator::Simulator() : m_regs() {}
 void Simulator::run_simulation(const std::string& filepath) {
     std::ifstream file(filepath);
     if (!file) {
-        LOGGER.Error("Cannot open file: {}", filepath);
+        LOGGER.Error("Cannot open file: " + filepath);
         throw std::runtime_error("Cannot open file: " + filepath);
     }
 
-    LOGGER.Info("Starting simulation from file: {}", filepath);
+    LOGGER.Info("Starting simulation from file: " + filepath);
 
     std::string line;
     std::vector<std::string> final_section;
@@ -113,7 +113,7 @@ void Simulator::run_simulation(const std::string& filepath) {
                 break;
             }
         } catch (const std::exception& e) {
-            LOGGER.Error("Error at IP {}: {}", old_ip, e.what());
+            LOGGER.Error("Error at IP " + std::to_string(old_ip) + ": " + e.what());
             break;
         }
     }
@@ -215,21 +215,21 @@ void Simulator::compare_with_expected(const ExpectedState& expected) {
     for (const auto& [reg_name, expected_value] : expected.register_changes) {
         uint16_t actual_value = (reg_name == "ip") ? m_regs.get_ip() : (m_regs.is8(reg_name) ? m_regs.get8(reg_name) : m_regs.get16(reg_name));
         if (actual_value != expected_value) {
-            LOGGER.Error("MISMATCH: {} expected 0x{:x}, got 0x{:x}", reg_name, expected_value, actual_value);
+            LOGGER.Error("MISMATCH: " + reg_name + " expected 0x" + std::to_string(expected_value) + ", got 0x" + std::to_string(actual_value));
         }
     }
     
     auto check_flag = [&](const std::string& name, bool expected_set) {
         bool actual = false;
-        if (name == "C") actual = m_regs.m_flags.CF;
-        else if (name == "P") actual = m_regs.m_flags.PF;
-        else if (name == "A") actual = m_regs.m_flags.AF;
-        else if (name == "Z") actual = m_regs.m_flags.ZF;
-        else if (name == "S") actual = m_regs.m_flags.SF;
-        else if (name == "O") actual = m_regs.m_flags.OF;
+        if (name == "C") actual = m_regs.m_flags.bits.CF;
+        else if (name == "P") actual = m_regs.m_flags.bits.PF;
+        else if (name == "A") actual = m_regs.m_flags.bits.AF;
+        else if (name == "Z") actual = m_regs.m_flags.bits.ZF;
+        else if (name == "S") actual = m_regs.m_flags.bits.SF;
+        else if (name == "O") actual = m_regs.m_flags.bits.OF;
         
         if (actual != expected_set) {
-            LOGGER.Error("MISMATCH: Flag {} expected to be {} but is {}", name, expected_set ? "set" : "clear", actual ? "set" : "clear");
+            LOGGER.Error("MISMATCH: Flag " + name + " expected to be " + (expected_set ? "set" : "clear") + " but is " + (actual ? "set" : "clear"));
         }
     };
 
@@ -264,21 +264,21 @@ void Simulator::compare_final_state(const std::vector<std::string>& final_sectio
     for (const auto& [name, exp] : expected_regs) {
         uint16_t actual = (name == "ip") ? m_regs.get_ip() : m_regs.get16(name);
         if (actual != exp) {
-            LOGGER.Error("Final {} MISMATCH: expected 0x{:x}, got 0x{:x}", name, exp, actual);
+            LOGGER.Error("Final " + name + " MISMATCH: expected 0x" + std::to_string(exp) + ", got 0x" + std::to_string(actual));
             has_diff = true;
         }
     }
     
     std::string actual_flags;
-    if (m_regs.m_flags.CF) actual_flags += "C";
-    if (m_regs.m_flags.PF) actual_flags += "P";
-    if (m_regs.m_flags.AF) actual_flags += "A";
-    if (m_regs.m_flags.ZF) actual_flags += "Z";
-    if (m_regs.m_flags.SF) actual_flags += "S";
-    if (m_regs.m_flags.OF) actual_flags += "O";
+    if (m_regs.m_flags.bits.CF) actual_flags += "C";
+    if (m_regs.m_flags.bits.PF) actual_flags += "P";
+    if (m_regs.m_flags.bits.AF) actual_flags += "A";
+    if (m_regs.m_flags.bits.ZF) actual_flags += "Z";
+    if (m_regs.m_flags.bits.SF) actual_flags += "S";
+    if (m_regs.m_flags.bits.OF) actual_flags += "O";
 
     if (actual_flags != expected_flags) {
-        LOGGER.Error("Final flags MISMATCH: expected {}, got {}", expected_flags, actual_flags);
+        LOGGER.Error("Final flags MISMATCH: expected " + expected_flags + ", got " + actual_flags);
         has_diff = true;
     }
 

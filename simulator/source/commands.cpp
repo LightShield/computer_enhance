@@ -67,39 +67,42 @@ static bool has_signed_overflow_add(int16_t old_val, int16_t operand, int16_t re
 }
 
 static void update_flags_arithmetic(Registers& regs, uint16_t result, uint16_t old_val, uint16_t operand, bool is_8bit, bool is_sub) {
-    regs.m_flags.ZF = (result == 0) ? 1 : 0;
+    regs.m_flags.bits.ZF = (result == 0) ? 1 : 0;
 
     if (is_8bit) {
-        regs.m_flags.SF = ((result & 0x80) != 0) ? 1 : 0;
-        regs.m_flags.PF = calculate_parity(static_cast<uint8_t>(result)) ? 1 : 0;
+        regs.m_flags.bits.SF = ((result & 0x80) != 0) ? 1 : 0;
+        regs.m_flags.bits.PF = calculate_parity(static_cast<uint8_t>(result)) ? 1 : 0;
     } else {
-        regs.m_flags.SF = ((result & 0x8000) != 0) ? 1 : 0;
-        regs.m_flags.PF = calculate_parity(static_cast<uint8_t>(result & 0xFF)) ? 1 : 0;
+        regs.m_flags.bits.SF = ((result & 0x8000) != 0) ? 1 : 0;
+        regs.m_flags.bits.PF = calculate_parity(static_cast<uint8_t>(result & 0xFF)) ? 1 : 0;
     }
 
+    // AF is carry from bit 3 to 4
     if (is_sub) {
-        regs.m_flags.CF = (old_val < operand) ? 1 : 0;
+        regs.m_flags.bits.AF = ((old_val & 0xF) < (operand & 0xF)) ? 1 : 0;
+        regs.m_flags.bits.CF = (old_val < operand) ? 1 : 0;
         if (is_8bit) {
-            regs.m_flags.OF = has_signed_overflow_sub(
+            regs.m_flags.bits.OF = has_signed_overflow_sub(
                 static_cast<int8_t>(old_val),
                 static_cast<int8_t>(operand),
                 static_cast<int8_t>(result)) ? 1 : 0;
         } else {
-            regs.m_flags.OF = has_signed_overflow_sub(
+            regs.m_flags.bits.OF = has_signed_overflow_sub(
                 static_cast<int16_t>(old_val),
                 static_cast<int16_t>(operand),
                 static_cast<int16_t>(result)) ? 1 : 0;
         }
     } else {
+        regs.m_flags.bits.AF = (((old_val & 0xF) + (operand & 0xF)) > 0xF) ? 1 : 0;
         if (is_8bit) {
-            regs.m_flags.CF = (result < (old_val & 0xFF)) ? 1 : 0;
-            regs.m_flags.OF = has_signed_overflow_add(
+            regs.m_flags.bits.CF = (result < (old_val & 0xFF)) ? 1 : 0;
+            regs.m_flags.bits.OF = has_signed_overflow_add(
                 static_cast<int8_t>(old_val),
                 static_cast<int8_t>(operand),
                 static_cast<int8_t>(result)) ? 1 : 0;
         } else {
-            regs.m_flags.CF = (result < old_val) ? 1 : 0;
-            regs.m_flags.OF = has_signed_overflow_add(
+            regs.m_flags.bits.CF = (result < old_val) ? 1 : 0;
+            regs.m_flags.bits.OF = has_signed_overflow_add(
                 static_cast<int16_t>(old_val),
                 static_cast<int16_t>(operand),
                 static_cast<int16_t>(result)) ? 1 : 0;
@@ -174,7 +177,7 @@ std::string cmd_cmp(Registers& regs, const std::vector<std::string>& args, uint1
 
 std::string cmd_jne(Registers& regs, const std::vector<std::string>& args, uint16_t current_instr_end_ip) {
     if (args.size() != 1) throw std::runtime_error("jne requires 1 argument");
-    if (!regs.m_flags.ZF) {
+    if (!regs.m_flags.bits.ZF) {
         int target_ip = parse_operand(regs, args[0], current_instr_end_ip);
         regs.set_ip(static_cast<uint16_t>(target_ip));
     }

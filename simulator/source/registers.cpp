@@ -13,10 +13,10 @@ Registers::Registers() : m_captured_flags_value(0) {
     };
 
     m_reg8_map = {
-        {"ah", &m_ax.high}, {"al", &m_ax.low},
-        {"bh", &m_bx.high}, {"bl", &m_bx.low},
-        {"ch", &m_cx.high}, {"cl", &m_cx.low},
-        {"dh", &m_dx.high}, {"dl", &m_dx.low},
+        {"ah", &m_ax.bytes.high}, {"al", &m_ax.bytes.low},
+        {"bh", &m_bx.bytes.high}, {"bl", &m_bx.bytes.low},
+        {"ch", &m_cx.bytes.high}, {"cl", &m_cx.bytes.low},
+        {"dh", &m_dx.bytes.high}, {"dl", &m_dx.bytes.low},
     };
 }
 
