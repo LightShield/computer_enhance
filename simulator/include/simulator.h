@@ -9,22 +9,23 @@ namespace lightshield {
 
 // Represents expected state changes for a command
 struct ExpectedState {
-    std::unordered_map<std::string, uint16_t> register_changes;  // reg_name -> new_value
-    std::unordered_set<std::string> flags_set;                   // Flags that should be set
-    std::unordered_set<std::string> flags_cleared;               // Flags that should be cleared
+    std::unordered_map<std::string, uint16_t> register_changes;
+    std::unordered_set<std::string> flags_set;
+    std::unordered_set<std::string> flags_cleared;
 };
 
 // Represents a parsed command line with expected output
 struct CommandLine {
-    std::string command;
     ExpectedState expected;
-    bool has_expected;
+    std::string command;
     uint16_t instruction_length;
+    bool has_expected;
+    
+    // Trailing padding for 8-byte alignment
+    uint8_t m_reserved[5] = {0}; 
 };
 
 class Simulator {
-    Registers m_regs;
-
 public:
     Simulator();
     void run_simulation(const std::string& filepath);
@@ -32,6 +33,8 @@ public:
     const Registers& get_registers() const { return m_regs; }
 
 private:
+    Registers m_regs;
+
     CommandLine parse_command_line(const std::string& line);
     void compare_with_expected(const ExpectedState& expected);
     void compare_final_state(const std::vector<std::string>& final_section);

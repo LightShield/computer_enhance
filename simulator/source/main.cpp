@@ -1,50 +1,30 @@
 #include <iostream>
 #include <stdexcept>
-#include <tuple>
-#include "configs_loader.hpp"
+#include <string>
+#include <vector>
 #include "logger.h"
 #include "simulator.h"
 
-using namespace lightshield::config;
 using namespace lightshield;
 
-struct SimulatorConfigs {
-    Config<std::string> input_file{
-        .default_value = "",
-        .value = "",
-        .verifier = [](const std::string& v) { return !v.empty(); },
-        .flags = {"--input", "-i"},
-        .description = "Path to assembly file to simulate",
-        .required = true,
-        .is_set = false
-    };
-
-    Config<std::string> verbosity{
-        .default_value = "info",
-        .value = "info",
-        .verifier = [](const std::string&) { return true; },
-        .flags = {"--verbosity", "-v"},
-        .description = "Set log verbosity level",
-        .required = false,
-        .is_set = false
-    };
-
-    REGISTER_CONFIG_FIELDS(input_file, verbosity)
-};
-
 int main(int argc, char* argv[]) {
-    ConfigsLoader<SimulatorConfigs> loader;
+    std::string input_file;
+    
+    // Very basic CLI parsing for now
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if ((arg == "--input" || arg == "-i") && i + 1 < argc) {
+            input_file = argv[++i];
+        }
+    }
 
-    if (loader.init(argc, argv) != 0) {
+    if (input_file.empty()) {
+        std::cerr << "Usage: " << argv[0] << " --input <file>" << std::endl;
         return 1;
     }
 
-    std::string input_file = loader.configs.input_file.value;
-
     Logger::Config logger_config;
-    if (loader.configs.verbosity.is_set) {
-        logger_config.level = Logger::ParseLogLevel(loader.configs.verbosity.value);
-    }
+    logger_config.level = LogLevel::Info;
     Logger::Init(logger_config);
 
     LOGGER.Info("=== Computer Enhance - 8086 Simulator ===");
@@ -54,7 +34,7 @@ int main(int argc, char* argv[]) {
         sim.run_simulation(input_file);
         return 0;
     } catch (const std::exception& e) {
-        LOGGER.Error("Simulator error: " + std::string(e.what()));
+        LOGGER.Error("Simulator error: {}", e.what());
         return 1;
     }
 }

@@ -9,11 +9,16 @@ namespace lightshield {
 // Command handler type: takes registers, arguments, and current_instr_end_ip
 using CommandHandler = std::string(*)(Registers& regs, const std::vector<std::string>& args, uint16_t current_instr_end_ip);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpadded"
+
 // Command table entry
 struct CommandEntry {
     uint32_t hash;
     CommandHandler handler;
 };
+
+#pragma GCC diagnostic pop
 
 // DJB2 hash algorithm initial value
 constexpr uint32_t DJB2_HASH_INIT = 5381;

@@ -4,6 +4,8 @@
 
 namespace lightshield {
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpadded"
 struct Register16 {
     union {
         uint16_t value;
@@ -42,5 +44,6 @@ struct Flags {
     void reset();
     std::string dump() const;
 };
+#pragma GCC diagnostic pop
 
 } // namespace lightshield

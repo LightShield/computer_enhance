@@ -10,6 +10,9 @@
 
 namespace lightshield {
 
+/**
+ * @brief 8086 Register file and state tracking.
+ */
 class Registers {
 public:
     Registers();
@@ -29,21 +32,25 @@ public:
     void capture_flags();
     void check_flag_changes();
 
-    // Accessors for simulator convenience
     uint16_t get_ip() const { return m_ip.value; }
     void set_ip(uint16_t value) { m_ip.value = value; }
     
-    // Flags is public for easier manipulation in commands, but we could make it private
-    Flags m_flags;
+    Flags& flags() { return m_flags; }
+    const Flags& flags() const { return m_flags; }
 
 private:
+    // 8-byte aligned members
     std::unordered_map<std::string, Register16*> m_reg16_map;
     std::unordered_map<std::string, uint8_t*> m_reg8_map;
-
-    Register16 m_ax, m_bx, m_cx, m_dx, m_si, m_di, m_bp, m_sp, m_ip;
-
     ChangeSet m_change_set;
+
+    // 16-bit and smaller members
+    Register16 m_ax, m_bx, m_cx, m_dx, m_si, m_di, m_bp, m_sp, m_ip;
+    Flags m_flags;
     uint16_t m_captured_flags_value;
+    
+    // Trailing padding to satisfy -Wpadded without pragmas
+    uint16_t m_reserved0 = 0; 
 };
 
 } // namespace lightshield

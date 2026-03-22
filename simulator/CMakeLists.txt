@@ -20,7 +20,7 @@ else()
     target_compile_options(simulator_main PRIVATE 
         -Werror -Wall -Wextra -Wpedantic -Wshadow -Wconversion 
         -Wsign-conversion -Woverloaded-virtual -Wnon-virtual-dtor 
-        -Wformat=2 -Wunused
+        -Wformat=2 -Wunused -Wpadded
     )
 endif()
 

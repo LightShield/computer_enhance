@@ -87,6 +87,8 @@ void Registers::capture_flags() {
 void Registers::check_flag_changes() {
     uint16_t current_flags = m_flags.value;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpadded"
     const struct {
         const char* name;
         uint16_t mask;
@@ -101,6 +103,7 @@ void Registers::check_flag_changes() {
         {"DF", 0x0400},
         {"OF", 0x0800}
     };
+#pragma GCC diagnostic pop
 
     for (const auto& flag : flag_bits) {
         bool old_val = (m_captured_flags_value & flag.mask) != 0;

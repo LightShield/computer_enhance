@@ -221,12 +221,12 @@ void Simulator::compare_with_expected(const ExpectedState& expected) {
     
     auto check_flag = [&](const std::string& name, bool expected_set) {
         bool actual = false;
-        if (name == "C") actual = m_regs.m_flags.bits.CF;
-        else if (name == "P") actual = m_regs.m_flags.bits.PF;
-        else if (name == "A") actual = m_regs.m_flags.bits.AF;
-        else if (name == "Z") actual = m_regs.m_flags.bits.ZF;
-        else if (name == "S") actual = m_regs.m_flags.bits.SF;
-        else if (name == "O") actual = m_regs.m_flags.bits.OF;
+        if (name == "C") actual = m_regs.flags().bits.CF;
+        else if (name == "P") actual = m_regs.flags().bits.PF;
+        else if (name == "A") actual = m_regs.flags().bits.AF;
+        else if (name == "Z") actual = m_regs.flags().bits.ZF;
+        else if (name == "S") actual = m_regs.flags().bits.SF;
+        else if (name == "O") actual = m_regs.flags().bits.OF;
         
         if (actual != expected_set) {
             LOGGER.Error("MISMATCH: Flag {} expected to be {} but is {}", name, expected_set ? "set" : "clear", actual ? "set" : "clear");
@@ -270,12 +270,12 @@ void Simulator::compare_final_state(const std::vector<std::string>& final_sectio
     }
     
     std::string actual_flags;
-    if (m_regs.m_flags.bits.CF) actual_flags += "C";
-    if (m_regs.m_flags.bits.PF) actual_flags += "P";
-    if (m_regs.m_flags.bits.AF) actual_flags += "A";
-    if (m_regs.m_flags.bits.ZF) actual_flags += "Z";
-    if (m_regs.m_flags.bits.SF) actual_flags += "S";
-    if (m_regs.m_flags.bits.OF) actual_flags += "O";
+    if (m_regs.flags().bits.CF) actual_flags += "C";
+    if (m_regs.flags().bits.PF) actual_flags += "P";
+    if (m_regs.flags().bits.AF) actual_flags += "A";
+    if (m_regs.flags().bits.ZF) actual_flags += "Z";
+    if (m_regs.flags().bits.SF) actual_flags += "S";
+    if (m_regs.flags().bits.OF) actual_flags += "O";
 
     if (actual_flags != expected_flags) {
         LOGGER.Error("Final flags MISMATCH: expected {}, got {}", expected_flags, actual_flags);
