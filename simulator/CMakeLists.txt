@@ -7,11 +7,11 @@ add_executable(simulator_main)
 # Source files and internal includes are abstracted in the source directory
 add_subdirectory(source)
 
-# Link against internal components
+# Link against internal components using their namespaced aliases
 target_link_libraries(simulator_main 
     PRIVATE 
-        logger_cpp 
-        configs_loader_cpp
+        lightshield::logger
+        lightshield::configs_loader
 )
 
 if(MSVC)
