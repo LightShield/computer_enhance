@@ -10,4 +10,7 @@ target_sources(simulator_main
 )
 
 # Headers for this component
-target_include_directories(simulator_main PRIVATE ../include)
+target_include_directories(simulator_main 
+    PRIVATE 
+        ../include
+)
