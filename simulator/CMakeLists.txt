@@ -7,8 +7,12 @@ add_executable(simulator_main)
 # Source files and internal includes are abstracted in the source directory
 add_subdirectory(source)
 
-# Link against shared libraries managed in the shared/ directory
-target_link_libraries(simulator_main PRIVATE logger_cpp configs_loader_cpp)
+# Link against internal components
+target_link_libraries(simulator_main 
+    PRIVATE 
+        logger_cpp 
+        configs_loader_cpp
+)
 
 if(MSVC)
     target_compile_options(simulator_main PRIVATE /W4)
