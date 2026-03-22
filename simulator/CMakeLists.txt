@@ -15,9 +15,13 @@ target_link_libraries(simulator_main
 )
 
 if(MSVC)
-    target_compile_options(simulator_main PRIVATE /W4)
+    target_compile_options(simulator_main PRIVATE /W4 /WX /permissive-)
 else()
-    target_compile_options(simulator_main PRIVATE -Wall -Wextra -Wpedantic -Wshadow)
+    target_compile_options(simulator_main PRIVATE 
+        -Werror -Wall -Wextra -Wpedantic -Wshadow -Wconversion 
+        -Wsign-conversion -Woverloaded-virtual -Wnon-virtual-dtor 
+        -Wformat=2 -Wunused
+    )
 endif()
 
 # Ensure binary is placed in the root build directory
