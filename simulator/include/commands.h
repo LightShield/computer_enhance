@@ -4,6 +4,8 @@
 #include <cstdint>
 #include "registers.h"
 
+namespace lightshield {
+
 // Command handler type: takes registers, arguments, and current_instr_end_ip
 using CommandHandler = std::string(*)(Registers& regs, const std::vector<std::string>& args, uint16_t current_instr_end_ip);
 
@@ -43,3 +45,5 @@ inline CommandEntry commands_table[COMMANDS_TABLE_SIZE] = {
     {hash_command("jne"), cmd_jne},
     {hash_command("jnz"), cmd_jne},
 };
+
+} // namespace lightshield

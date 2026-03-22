@@ -2,32 +2,40 @@
 #include <cstdint>
 #include <string>
 
-struct Registers;
+namespace lightshield {
 
-struct Register16Proxy {
-    std::string name;
-    Registers& regs;
-    uint16_t* ptr;
+class Registers;
 
-    Register16Proxy(Registers& r, const std::string& n, uint16_t* p);
+class Register16Proxy {
+public:
+    Register16Proxy(Registers& regs, const std::string& name, uint16_t* value_ptr)
+        : m_regs(regs), m_name(name), m_value_ptr(value_ptr) {}
 
-    Register16Proxy& operator=(uint16_t value);
-    Register16Proxy& operator+=(uint16_t value);
-    Register16Proxy& operator-=(uint16_t value);
+    operator uint16_t() const { return *m_value_ptr; }
+    Register16Proxy& operator=(uint16_t new_value);
+    Register16Proxy& operator+=(uint16_t val);
+    Register16Proxy& operator-=(uint16_t val);
 
-    operator uint16_t() const { return *ptr; }
+private:
+    Registers& m_regs;
+    std::string m_name;
+    uint16_t* m_value_ptr;
 };
 
-struct Register8Proxy {
-    std::string name;
-    Registers& regs;
-    uint8_t* ptr;
+class Register8Proxy {
+public:
+    Register8Proxy(Registers& regs, const std::string& name, uint8_t* value_ptr)
+        : m_regs(regs), m_name(name), m_value_ptr(value_ptr) {}
 
-    Register8Proxy(Registers& r, const std::string& n, uint8_t* p);
+    operator uint8_t() const { return *m_value_ptr; }
+    Register8Proxy& operator=(uint8_t new_value);
+    Register8Proxy& operator+=(uint8_t val);
+    Register8Proxy& operator-=(uint8_t val);
 
-    Register8Proxy& operator=(uint8_t value);
-    Register8Proxy& operator+=(uint8_t value);
-    Register8Proxy& operator-=(uint8_t value);
-
-    operator uint8_t() const { return *ptr; }
+private:
+    Registers& m_regs;
+    std::string m_name;
+    uint8_t* m_value_ptr;
 };
+
+} // namespace lightshield

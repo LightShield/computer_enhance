@@ -4,6 +4,8 @@
 
 #include "registers.h"
 
+namespace lightshield {
+
 Registers::Registers() : m_captured_flags_value(0) {
     m_reg16_map = {
         {"ax", &m_ax}, {"bx", &m_bx}, {"cx", &m_cx}, {"dx", &m_dx},
@@ -108,3 +110,5 @@ void Registers::check_flag_changes() {
         }
     }
 }
+
+} // namespace lightshield

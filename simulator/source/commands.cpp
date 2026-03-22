@@ -5,6 +5,8 @@
 #include "commands.h"
 #include "logger.h"
 
+namespace lightshield {
+
 static std::string clean_operand(const std::string& operand) {
     std::string cleaned = operand;
     if (!cleaned.empty() && cleaned.back() == ',') {
@@ -178,3 +180,5 @@ std::string cmd_jne(Registers& regs, const std::vector<std::string>& args, uint1
     }
     return "OK";
 }
+
+} // namespace lightshield

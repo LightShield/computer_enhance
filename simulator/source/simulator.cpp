@@ -9,6 +9,8 @@
 #include "logger.h"
 #include "simulator.h"
 
+namespace lightshield {
+
 static std::vector<std::string> split(const std::string& s) {
     std::istringstream iss(s);
     std::vector<std::string> tokens;
@@ -97,9 +99,9 @@ void Simulator::run_simulation(const std::string& filepath) {
             }
 
             if (change_str.str().empty()) {
-                LOGGER.Info("{}", display_line);
+                LOGGER.Info(display_line);
             } else {
-                LOGGER.Info("{} ; {}", display_line, change_str.str());
+                LOGGER.Info(display_line + " ; " + change_str.str());
             }
 
             if (cmd_line.has_expected) {
@@ -282,3 +284,5 @@ void Simulator::compare_final_state(const std::vector<std::string>& final_sectio
 
     if (!has_diff) LOGGER.Info("All final state values match!");
 }
+
+} // namespace lightshield

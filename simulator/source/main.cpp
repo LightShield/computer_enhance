@@ -6,6 +6,7 @@
 #include "simulator.h"
 
 using namespace lightshield::config;
+using namespace lightshield;
 
 struct SimulatorConfigs {
     Config<std::string> input_file{
@@ -35,7 +36,6 @@ int main(int argc, char* argv[]) {
     ConfigsLoader<SimulatorConfigs> loader;
 
     if (loader.init(argc, argv) != 0) {
-        // Error messages are already printed to stderr by loader.init()
         return 1;
     }
 

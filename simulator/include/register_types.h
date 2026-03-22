@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <string>
 
+namespace lightshield {
+
 struct Register16 {
     union {
         uint16_t value;
@@ -40,3 +42,5 @@ struct Flags {
     void reset();
     std::string dump() const;
 };
+
+} // namespace lightshield

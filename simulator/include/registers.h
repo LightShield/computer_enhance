@@ -8,6 +8,8 @@
 #include "register_proxy.h"
 #include "register_types.h"
 
+namespace lightshield {
+
 class Registers {
 public:
     Registers();
@@ -43,3 +45,5 @@ private:
     ChangeSet m_change_set;
     uint16_t m_captured_flags_value;
 };
+
+} // namespace lightshield

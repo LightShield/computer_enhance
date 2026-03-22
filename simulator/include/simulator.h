@@ -5,6 +5,8 @@
 #include <vector>
 #include "registers.h"
 
+namespace lightshield {
+
 // Represents expected state changes for a command
 struct ExpectedState {
     std::unordered_map<std::string, uint16_t> register_changes;  // reg_name -> new_value
@@ -34,3 +36,5 @@ private:
     void compare_with_expected(const ExpectedState& expected);
     void compare_final_state(const std::vector<std::string>& final_section);
 };
+
+} // namespace lightshield
