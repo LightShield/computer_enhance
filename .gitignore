@@ -1,0 +1,15 @@
+# Build directories
+build/
+simulator/build/
+shared/logger_cpp/build/
+shared/configs_loader/build/
+
+# IDE and system files
+.vscode/
+.DS_Store
+
+# Portable CMake
+external/cmake/
+
+# Submodule build artifacts
+_deps/

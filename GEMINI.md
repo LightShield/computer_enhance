@@ -12,7 +12,9 @@ This document defines the core operational mandates for Gemini CLI in this works
 
 - **Common Guidelines:** [../../Guidelines/guidelines/common_guidelines](../Guidelines/guidelines/common_guidelines)
 - **Python Standards:** [../../Guidelines/guidelines/python_guidelines](../Guidelines/guidelines/python_guidelines)
-- **C++ Standards:** [../../Guidelines/guidelines/cpp_guidelines](../Guidelines/guidelines/cpp_guidelines)
+- **C++ Standards:** [../Guidelines/guidelines/cpp_guidelines](../Guidelines/guidelines/cpp_guidelines)
+- **CMake Standards:** [../Guidelines/guidelines/cmake_guidelines](../Guidelines/guidelines/cmake_guidelines)
+
 - **Agent Patterns & Protocols:** [../../Guidelines/agents/agents_base.md](../Guidelines/agents/agents_base.md)
 - **Verification Protocols:** [../../Guidelines/VERIFICATION.md](../Guidelines/VERIFICATION.md)
 
